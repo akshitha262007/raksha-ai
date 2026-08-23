@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="aesthetic-pink">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoteCraft Studio - Aesthetic Spiral Journal & Note Beautifier</title>
+    
+    <!-- Google Fonts: Calligraphy, Handwritten & Modern -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Dancing+Script:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- KaTeX CSS for Math equations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    
+    <!-- Prism CSS for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Top Navigation Header -->
+        <header class="app-header">
+            <div class="logo-group">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-book-open-reader"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>NoteCraft <span>Studio</span></h1>
+                    <p class="tagline">Aesthetic Spiral Journal & Thought Bulletizer</p>
+                </div>
+            </div>
+
+            <div class="header-controls">
+                <!-- Multi-User Profile Switcher -->
+                <div class="control-group profile-control">
+                    <label for="profileSelect"><i class="fa-solid fa-user-graduate"></i> User Profile:</label>
+                    <select id="profileSelect" class="select-input profile-select">
+                        <option value="anusha" selected>👩‍🎓 Anusha (Java Master Notes)</option>
+                        <option value="harsha">💊 Harsha (Pharmacy & Medical)</option>
+                        <option value="ambike">💻 Ambike (CS & Tech)</option>
+                    </select>
+                </div>
+
+                <!-- Visual Style View Toggle -->
+                <div class="control-group">
+                    <label for="viewStyleSelect"><i class="fa-solid fa-journal-whills"></i> Layout:</label>
+                    <select id="viewStyleSelect" class="select-input">
+                        <option value="spiral-journal" selected>📖 Spiral Journal (Photo Style)</option>
+                        <option value="modern-paper">📄 Executive Paper</option>
+                    </select>
+                </div>
+
+                <!-- Theme Switcher -->
+                <div class="control-group">
+                    <label for="themeSelect"><i class="fa-solid fa-palette"></i> Theme:</label>
+                    <select id="themeSelect" class="select-input">
+                        <option value="aesthetic-pink" selected>💖 Pink Soft Pastel</option>
+                        <option value="sage-mint">🌿 Sage & Mint</option>
+                        <option value="glass-dark">✨ Cyber Glass Dark</option>
+                        <option value="vintage-parchment">📜 Vintage Parchment</option>
+                        <option value="lavender-dream">🪻 Lavender Dream</option>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <button id="btnSavedNotes" class="btn btn-secondary">
+                    <i class="fa-solid fa-folder-open"></i> Saved (<span id="savedCount">0</span>)
+                </button>
+
+                <button id="btnExport" class="btn btn-primary">
+                    <i class="fa-solid fa-download"></i> Export
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="main-workspace">
+            <!-- Left Panel: Raw Input & Subject Configuration -->
+            <section class="panel input-panel">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-pen-nib"></i> Raw Notes & File Import</h2>
+                    <div class="panel-actions">
+                        <button id="btnClear" class="btn-sm btn-outline" title="Clear input">
+                            <i class="fa-solid fa-trash-can"></i> Clear
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <!-- Quick Sample Presets -->
+                    <div class="preset-pills">
+                        <span class="preset-label"><i class="fa-solid fa-bolt"></i> Quick Load:</span>
+                        <button class="preset-pill active" id="btnSampleJava">☕ Missed Lesson: Arrays (Java)</button>
+                        <button class="preset-pill" id="btnSamplePharma">💊 Harsha: Pharmacy & Drugs</button>
+                        <button class="preset-pill" id="btnSampleCS">💻 Ambike: Data Structures</button>
+                        <button class="preset-pill" id="btnSampleLaw">⚖️ Law Procedures</button>
+                    </div>
+
+                    <!-- File Drag & Drop Upload Zone -->
+                    <div class="file-upload-zone" id="uploadZone">
+                        <input type="file" id="fileInput" accept=".pdf,.txt,.md,.png,.jpg,.jpeg" class="file-input-hidden">
+                        <div class="upload-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+                        <div class="upload-text">
+                            <strong>Upload Notes PDF / Image / Text</strong>
+                            <span>Drag & drop your missed lesson or raw study material here</span>
+                        </div>
+                        <button type="button" class="btn-sm btn-accent" id="btnBrowseFile">
+                            <i class="fa-solid fa-folder-open"></i> Browse Files
+                        </button>
+                    </div>
+
+                    <!-- Note Title Input -->
+                    <div class="form-group">
+                        <label for="noteTitle"><i class="fa-solid fa-heading"></i> Main Topic / Lesson Title</label>
+                        <input type="text" id="noteTitle" class="text-input" placeholder="e.g., Arrays (1D & 2D) - Missed Lesson..." value="22) Arrays (1D) — basics & 2D Arrays">
+                    </div>
+
+                    <!-- Subject & Template Selector Grid -->
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="subjectSelect"><i class="fa-solid fa-graduation-cap"></i> Subject Domain</label>
+                            <select id="subjectSelect" class="select-input">
+                                <option value="cs" selected>💻 Computer Science & Java</option>
+                                <option value="pharmacy">💊 Pharmacy & Pharmacology</option>
+                                <option value="science">🧬 Medical & Biology</option>
+                                <option value="law">⚖️ Law & Legal Studies</option>
+                                <option value="math">📐 Mathematics & Physics</option>
+                                <option value="general">📝 General Academic</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group flex-1">
+                            <label for="fontSelect"><i class="fa-solid fa-font"></i> Header Script</label>
+                            <select id="fontSelect" class="select-input">
+                                <option value="font-caveat" selected>✍️ Caveat (Aesthetic Brush)</option>
+                                <option value="font-dancing">✨ Dancing Script (Cursive)</option>
+                                <option value="font-kalam">🖋️ Kalam (Handwritten)</option>
+                                <option value="font-patrick">📝 Patrick Hand (Neat)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Subject Enrichment Options -->
+                    <div class="enrichment-card">
+                        <div class="enrichment-header">
+                            <span><i class="fa-solid fa-wand-magic-sparkles"></i> Aesthetic Notebook Generator</span>
+                            <span class="badge badge-accent">Interactive</span>
+                        </div>
+                        <div class="enrichment-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="optBulletize" checked>
+                                <span><i class="fa-solid fa-list-check"></i> Thought Bullets & Flowcharts</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="optStickyNotes" checked>
+                                <span><i class="fa-solid fa-note-sticky"></i> Soft Pastel Callout Cards</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="optHighlighter" checked>
+                                <span><i class="fa-solid fa-highlighter"></i> Pastel Highlighters</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="optFlashcards" checked>
+                                <span><i class="fa-solid fa-layer-group"></i> Study Flashcards & Quiz</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Bullet Style Selector -->
+                    <div class="form-group">
+                        <label for="bulletStyleSelect"><i class="fa-solid fa-list-ul"></i> Bullet Point Style</label>
+                        <select id="bulletStyleSelect" class="select-input">
+                            <option value="flower" selected>🌸 Pastel Flower Icon</option>
+                            <option value="sparkle">✨ Soft Pastel Sparkle</option>
+                            <option value="dot">• Classic Bullet Dot</option>
+                            <option value="dash">– Aesthetic Dash</option>
+                            <option value="arrow">➔ Cute Mini Arrow</option>
+                        </select>
+                    </div>
+
+                    <!-- Raw Notes Textarea -->
+                    <div class="form-group flex-fill">
+                        <label for="rawNotesInput">
+                            <span><i class="fa-solid fa-align-left"></i> Raw Unstructured / Extracted Notes</span>
+                            <span class="char-count" id="charCount">0 words</span>
+                        </label>
+                        <textarea id="rawNotesInput" class="textarea-input" placeholder="Paste your raw notes or edit parsed file text here..."></textarea>
+                    </div>
+
+                    <!-- Action Trigger Buttons -->
+                    <div class="action-bar-grid">
+                        <button id="btnConvert" class="btn btn-accent btn-lg">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Beautify Notes
+                        </button>
+                        <button id="btnAppendMaster" class="btn btn-success btn-lg" title="Append these transformed notes into your Master Notebook!">
+                            <i class="fa-solid fa-plus-node"></i> Append to Master Notes
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Live Rendered Aesthetic Note View -->
+            <section class="panel output-panel">
+                <div class="panel-header">
+                    <!-- Tab Navigation -->
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="rendered">
+                            <i class="fa-solid fa-book-open"></i> Aesthetic Notebook
+                        </button>
+                        <button class="tab-btn" data-tab="diagrams">
+                            <i class="fa-solid fa-diagram-project"></i> Memory & Flowcharts
+                        </button>
+                        <button class="tab-btn" data-tab="flashcards">
+                            <i class="fa-solid fa-layer-group"></i> Flashcards (<span id="flashcardCountBadge">0</span>)
+                        </button>
+                        <button class="tab-btn" data-tab="quiz">
+                            <i class="fa-solid fa-circle-question"></i> Practice Quiz
+                        </button>
+                        <button class="tab-btn" data-tab="raw-markdown">
+                            <i class="fa-brands fa-markdown"></i> Markdown
+                        </button>
+                    </div>
+
+                    <div class="panel-actions">
+                        <button id="btnSaveNote" class="btn-sm btn-success" title="Save to local library">
+                            <i class="fa-solid fa-bookmark"></i> Save Note
+                        </button>
+                        <button id="btnCopyNote" class="btn-sm btn-outline" title="Copy text">
+                            <i class="fa-solid fa-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <!-- Tab 1: Rendered Note -->
+                    <div id="tab-rendered" class="tab-content active">
+                        <!-- Spiral Notebook Wrap -->
+                        <div class="spiral-notebook-wrapper" id="spiralNotebookWrapper">
+                            <!-- Spiral Metal Binding Rings -->
+                            <div class="spiral-rings" id="spiralRings">
+                                <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+                                <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+                                <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+                                <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+                                <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+                            </div>
+
+                            <!-- Notebook Pages Container -->
+                            <div class="notebook-pages font-caveat" id="renderedPaper">
+                                <!-- Empty State -->
+                                <div class="empty-state" id="emptyState">
+                                    <div class="empty-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+                                    <h3>Your Aesthetic Notebook Will Appear Here</h3>
+                                    <p>Paste raw notes on the left and click <strong>Convert & Beautify Notes</strong> to see handwritten calligraphy headers, pastel sticky notes, and bullet points organized by thought!</p>
+                                </div>
+                                
+                                <!-- Dynamically Injected Rendered Note Container -->
+                                <div id="renderedOutput" class="rendered-output hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Visual Memory & Flowchart Diagrams -->
+                    <div id="tab-diagrams" class="tab-content">
+                        <div class="mindmap-container">
+                            <div class="mindmap-header">
+                                <h3><i class="fa-solid fa-diagram-project"></i> Concept Hierarchy & Memory Diagrams</h3>
+                            </div>
+                            
+                            <!-- Visual Memory Grid for Arrays & Objects -->
+                            <div id="visualMemoryDiagram" class="visual-memory-card">
+                                <h4><i class="fa-solid fa-microchip"></i> Array Memory Allocation (1D & 2D Heap Representation)</h4>
+                                <div class="memory-grid-wrapper">
+                                    <div class="memory-block">
+                                        <div class="memory-cell index">Index [0]</div>
+                                        <div class="memory-cell value">10</div>
+                                        <div class="memory-cell addr">0x101</div>
+                                    </div>
+                                    <div class="memory-block">
+                                        <div class="memory-cell index">Index [1]</div>
+                                        <div class="memory-cell value">20</div>
+                                        <div class="memory-cell addr">0x105</div>
+                                    </div>
+                                    <div class="memory-block">
+                                        <div class="memory-cell index">Index [2]</div>
+                                        <div class="memory-cell value">30</div>
+                                        <div class="memory-cell addr">0x109</div>
+                                    </div>
+                                    <div class="memory-block">
+                                        <div class="memory-cell index">Index [3]</div>
+                                        <div class="memory-cell value">40</div>
+                                        <div class="memory-cell addr">0x10D</div>
+                                    </div>
+                                </div>
+                                <div class="memory-note"><i class="fa-solid fa-circle-info"></i> Array elements are stored in continuous contiguous memory blocks in heap.</div>
+                            </div>
+
+                            <div id="mermaidDiagram" class="mermaid-target"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Flashcards -->
+                    <div id="tab-flashcards" class="tab-content">
+                        <div class="flashcards-wrapper">
+                            <div class="flashcards-controls">
+                                <span class="card-indicator">Card <span id="currentCardNum">1</span> of <span id="totalCardsNum">0</span></span>
+                                <div class="card-nav">
+                                    <button id="prevCard" class="btn-sm btn-outline"><i class="fa-solid fa-arrow-left"></i> Prev</button>
+                                    <button id="flipCard" class="btn-sm btn-accent"><i class="fa-solid fa-rotate"></i> Flip Card</button>
+                                    <button id="nextCard" class="btn-sm btn-outline">Next <i class="fa-solid fa-arrow-right"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="card-container" id="cardContainer">
+                                <div class="flashcard" id="flashcard">
+                                    <div class="card-front">
+                                        <span class="card-label">QUESTION / TERM</span>
+                                        <div class="card-body-text" id="cardFrontText">Convert notes to generate flashcards!</div>
+                                        <span class="card-hint"><i class="fa-solid fa-hand-pointer"></i> Click card or Flip button to see answer</span>
+                                    </div>
+                                    <div class="card-back">
+                                        <span class="card-label">DEFINITION / EXPLANATION</span>
+                                        <div class="card-body-text" id="cardBackText">The answer will appear here.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4: Interactive Quiz Engine -->
+                    <div id="tab-quiz" class="tab-content">
+                        <div class="quiz-wrapper">
+                            <div class="quiz-header">
+                                <h3><i class="fa-solid fa-graduation-cap"></i> Interactive Practice Quiz</h3>
+                                <div class="quiz-score" id="quizScoreBadge"><i class="fa-solid fa-trophy"></i> Score: 0/0</div>
+                            </div>
+                            <div id="quizContainer" class="quiz-container">
+                                <div class="quiz-empty-state">
+                                    <i class="fa-solid fa-lightbulb"></i>
+                                    <p>Convert notes to generate custom multiple-choice practice quiz questions!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 5: Raw Markdown -->
+                    <div id="tab-raw-markdown" class="tab-content">
+                        <div class="markdown-view-container">
+                            <pre><code id="rawMarkdownOutput" class="language-markdown"># Markdown view will appear here...</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Saved Notes Drawer Modal -->
+        <div id="drawerSaved" class="modal-drawer hidden">
+            <div class="drawer-content">
+                <div class="drawer-header">
+                    <h3><i class="fa-solid fa-folder-open"></i> My Saved Notes Library</h3>
+                    <button class="btn-close" id="btnCloseSaved">&times;</button>
+                </div>
+                <div class="drawer-body">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchSaved" placeholder="Search saved notes...">
+                    </div>
+                    <div id="savedNotesList" class="saved-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Modal -->
+        <div id="modalExport" class="modal hidden">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-download"></i> Export Note</h3>
+                    <button class="btn-close" id="btnCloseExport">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="export-grid">
+                        <button id="exportMD" class="export-card">
+                            <i class="fa-brands fa-markdown export-icon"></i>
+                            <div class="export-info">
+                                <h4>Markdown (.md)</h4>
+                                <p>Standard markdown file with bullet points</p>
+                            </div>
+                        </button>
+
+                        <button id="exportPDF" class="export-card">
+                            <i class="fa-solid fa-file-pdf export-icon pdf-icon"></i>
+                            <div class="export-info">
+                                <h4>PDF Document</h4>
+                                <p>Print-ready aesthetic notebook PDF</p>
+                            </div>
+                        </button>
+
+                        <button id="exportHTML" class="export-card">
+                            <i class="fa-solid fa-code export-icon html-icon"></i>
+                            <div class="export-info">
+                                <h4>Standalone HTML</h4>
+                                <p>Styled interactive HTML note file</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Script Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.2.4/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- App JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
