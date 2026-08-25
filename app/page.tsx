@@ -125,7 +125,7 @@ export default function Page() {
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
 
   // REAL SMS TEST STATE
-  const [testPhoneNumber, setTestPhoneNumber] = useState<string>('+919876543210');
+  const [testPhoneNumber, setTestPhoneNumber] = useState<string>('+919606724585');
   const [phoneValidationError, setPhoneValidationError] = useState<string | null>(null);
   
   const defaultTestMessage = `RAKSHA AI ALERT: EXTREME landslide risk detected in Zone 4 (Tawang). Heavy rainfall & soil saturation high. Move to safe location. DEMO ALERT - NOT AN EMERGENCY.`;
