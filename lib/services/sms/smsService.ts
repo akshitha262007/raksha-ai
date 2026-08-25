@@ -72,7 +72,7 @@ export async function sendTestSmsViaProvider(req: SendSmsRequest): Promise<SendS
     };
   }
 
-  // 2. Validate Message Content & Sanitize for Twilio Trial / DLT Compliance
+  // 2. Validate Message Content
   if (!req.message || !req.message.trim()) {
     return {
       success: false,
@@ -81,21 +81,6 @@ export async function sendTestSmsViaProvider(req: SendSmsRequest): Promise<SendS
       timestamp,
       provider: 'Twilio'
     };
-  }
-
-  // Automatically sanitize message to guarantee Twilio Trial delivery without Error 57006 for any number or text
-  let safeMessage = req.message
-    .replace(/[\r\n]+/g, ' ') // Replace newlines with spaces
-    .replace(/[^\x20-\x7E]/g, '') // Keep standard printable ASCII characters
-    .trim();
-
-  if (!safeMessage || safeMessage.length < 5) {
-    safeMessage = 'RAKSHA AI ALERT: EXTREME landslide risk detected in Zone 4 (Tawang). Heavy rainfall & soil saturation high. Move to safe location. DEMO ALERT.';
-  }
-
-  // Truncate to single GSM segment (150 chars max) to prevent multi-segment template rejection
-  if (safeMessage.length > 150) {
-    safeMessage = safeMessage.substring(0, 147) + '...';
   }
 
   const cleanedPhone = req.recipient.replace(/[\s\-\(\)]/g, '');
@@ -122,7 +107,21 @@ export async function sendTestSmsViaProvider(req: SendSmsRequest): Promise<SendS
     };
   }
 
-  // 4. Dispatch Real Request to Twilio Messages API Endpoint
+  // Prepare Twilio Trial Compliant Message Body
+  // Twilio Trial Accounts sending SMS to India require standard trial prefix:
+  const trialPrefix = "Sent from your Twilio trial account - ";
+  let cleanUserBody = req.message
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/[^\x20-\x7E]/g, '')
+    .trim();
+
+  if (cleanUserBody.startsWith(trialPrefix)) {
+    cleanUserBody = cleanUserBody.substring(trialPrefix.length);
+  }
+
+  const safeTrialBody = `${trialPrefix}RAKSHA AI: ${cleanUserBody.substring(0, 110)}`;
+
+  // 4. Dispatch Request to Twilio API
   try {
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
     const authHeader = 'Basic ' + Buffer.from(`${authUsername}:${authPassword}`).toString('base64');
@@ -130,7 +129,7 @@ export async function sendTestSmsViaProvider(req: SendSmsRequest): Promise<SendS
     const bodyData = new URLSearchParams({
       To: cleanedPhone,
       From: fromNumber,
-      Body: safeMessage
+      Body: safeTrialBody
     });
 
     const response = await fetch(twilioUrl, {
@@ -157,11 +156,18 @@ export async function sendTestSmsViaProvider(req: SendSmsRequest): Promise<SendS
         provider: 'Twilio REST API'
       };
     } else {
-      const errorMsg = data.message || data.detail || `Twilio Code ${data.code || response.status}`;
+      let errorMsg = data.message || data.detail || `Twilio Code ${data.code || response.status}`;
+
+      if (data.code === 21608) {
+        errorMsg = `Twilio Error 21608: The phone number ${cleanedPhone} is not verified in your Twilio Trial Account. Please add it to Twilio Verified Caller IDs (https://console.twilio.com/us1/develop/phone-numbers/manage/verified).`;
+      } else if (data.code === 57006) {
+        errorMsg = `Twilio Error 57006: Twilio Trial Account sending to India requires your number ${cleanedPhone} to be added to Twilio Verified Caller IDs.`;
+      }
+
       return {
         success: false,
         status: 'failed',
-        error: `Twilio API Error ${data.code || response.status}: ${errorMsg}`,
+        error: errorMsg,
         timestamp,
         provider: 'Twilio REST API'
       };
