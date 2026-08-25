@@ -624,14 +624,37 @@ export default function Page() {
                     </div>
 
                     {!deviceToken ? (
-                      <button
-                        onClick={registerPushDevice}
-                        disabled={isRegisteringPush}
-                        className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950 border border-emerald-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        <Bell className={`h-4 w-4 ${isRegisteringPush ? 'animate-spin' : ''}`} />
-                        <span>{isRegisteringPush ? 'Registering Browser...' : '[ REGISTER THIS DEVICE ]'}</span>
-                      </button>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={registerPushDevice}
+                          disabled={isRegisteringPush}
+                          className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950 border border-emerald-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          <Bell className={`h-4 w-4 ${isRegisteringPush ? 'animate-spin' : ''}`} />
+                          <span>{isRegisteringPush ? 'Registering Browser...' : '[ REGISTER THIS DEVICE ]'}</span>
+                        </button>
+
+                        <button
+                          onClick={async () => {
+                            if (typeof window !== 'undefined' && 'Notification' in window) {
+                              const perm = await Notification.requestPermission();
+                              if (perm === 'granted') {
+                                new Notification(pushTitle, {
+                                  body: pushBody,
+                                  icon: '/favicon.ico',
+                                  tag: 'raksha-ai-disaster-alert'
+                                });
+                              } else {
+                                alert('Please allow Notification permissions in your browser address bar to view push alerts.');
+                              }
+                            }
+                          }}
+                          className="w-full py-2 rounded-xl font-bold text-[11px] bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 text-yellow-300" />
+                          <span>[ 🧪 INSTANT BROWSER POPUP NOTIFICATION ]</span>
+                        </button>
+                      </div>
                     ) : (
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] text-emerald-400 font-bold flex-1 bg-emerald-950/60 p-2 rounded-lg border border-emerald-800">
