@@ -1,16 +1,15 @@
 importScripts('https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.13.1/firebase-messaging-compat.js');
 
-// Initialize Firebase App in Service Worker using URL params or fallback config
 const urlParams = new URLSearchParams(self.location.search);
 
 const firebaseConfig = {
-  apiKey: urlParams.get('apiKey') || 'AIzaSyDemoPlaceholderKeyForServiceWorker',
-  authDomain: urlParams.get('authDomain') || 'raksha-ai-demo.firebaseapp.com',
-  projectId: urlParams.get('projectId') || 'raksha-ai-demo',
-  storageBucket: urlParams.get('storageBucket') || 'raksha-ai-demo.appspot.com',
-  messagingSenderId: urlParams.get('messagingSenderId') || '100000000000',
-  appId: urlParams.get('appId') || '1:100000000000:web:demoplaceholder'
+  apiKey: urlParams.get('apiKey') || 'AIzaSyAEJgyo236nSN3o10MJ4XEcK1rJEeMAQEk',
+  authDomain: urlParams.get('authDomain') || 'raksha-ai-5e91e.firebaseapp.com',
+  projectId: urlParams.get('projectId') || 'raksha-ai-5e91e',
+  storageBucket: urlParams.get('storageBucket') || 'raksha-ai-5e91e.appspot.com',
+  messagingSenderId: urlParams.get('messagingSenderId') || '1008970376200',
+  appId: urlParams.get('appId') || '1:1008970376200:web:5cc9d85dcb578b9cae5dbd'
 };
 
 if (!firebase.apps.length) {

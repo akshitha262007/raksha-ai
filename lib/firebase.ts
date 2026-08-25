@@ -11,25 +11,15 @@ export interface FirebaseClientConfig {
   vapidKey: string;
 }
 
-export function getFirebaseConfig(): FirebaseClientConfig | null {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const messagingSenderId = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID;
-  const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
-  const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
-
-  if (!apiKey || !projectId || !messagingSenderId || !appId) {
-    return null;
-  }
-
+export function getFirebaseConfig(): FirebaseClientConfig {
   return {
-    apiKey,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || `${projectId}.firebaseapp.com`,
-    projectId,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com`,
-    messagingSenderId,
-    appId,
-    vapidKey: vapidKey || ''
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyAEJgyo236nSN3o10MJ4XEcK1rJEeMAQEk',
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'raksha-ai-5e91e.firebaseapp.com',
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'raksha-ai-5e91e',
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'raksha-ai-5e91e.appspot.com',
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '1008970376200',
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:1008970376200:web:5cc9d85dcb578b9cae5dbd',
+    vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || ''
   };
 }
 
@@ -59,14 +49,8 @@ export async function registerDeviceForPushNotifications(): Promise<{
       return { success: false, error: 'Notification permission was denied. Please allow notification permissions in your browser address bar.' };
     }
 
-    // 2. Check Client Firebase Configuration
+    // 2. Get Client Firebase Configuration
     const config = getFirebaseConfig();
-    if (!config) {
-      return {
-        success: false,
-        error: 'Firebase Web Push is not configured yet. Please configure NEXT_PUBLIC_FIREBASE_PROJECT_ID, NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID, NEXT_PUBLIC_FIREBASE_APP_ID, and NEXT_PUBLIC_FIREBASE_VAPID_KEY in environment variables.'
-      };
-    }
 
     // 3. Initialize Firebase Client App
     const app = getApps().length === 0 ? initializeApp(config) : getApp();
@@ -78,7 +62,7 @@ export async function registerDeviceForPushNotifications(): Promise<{
 
     // 5. Retrieve FCM Device Token
     const token = await getToken(messaging, {
-      vapidKey: config.vapidKey,
+      ...(config.vapidKey ? { vapidKey: config.vapidKey } : {}),
       serviceWorkerRegistration: swRegistration
     });
 
@@ -105,7 +89,6 @@ export function onForegroundPushNotification(callback: (payload: any) => void) {
   if (typeof window === 'undefined') return () => {};
 
   const config = getFirebaseConfig();
-  if (!config) return () => {};
 
   try {
     const app = getApps().length === 0 ? initializeApp(config) : getApp();
