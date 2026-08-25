@@ -24,7 +24,7 @@ export interface SendSmsResponse {
  */
 export function validatePhoneNumber(phone: string): { isValid: boolean; error?: string } {
   if (!phone || typeof phone !== 'string') {
-    return { isValid: false, error: 'Phone number is required.' };
+    return { isValid: false, error: 'Please enter a valid phone number including the country code.' };
   }
 
   // Remove spaces, dashes, parentheses for clean formatting check
@@ -36,7 +36,7 @@ export function validatePhoneNumber(phone: string): { isValid: boolean; error?: 
   if (!e164Regex.test(cleaned)) {
     return { 
       isValid: false, 
-      error: 'Invalid phone number format. Please use international format starting with country code (e.g. +919876543210).' 
+      error: 'Please enter a valid phone number including the country code.' 
     };
   }
 
@@ -60,13 +60,13 @@ export function maskPhoneNumber(phone: string): string {
 export async function sendTestSmsViaProvider(req: SendSmsRequest): Promise<SendSmsResponse> {
   const timestamp = new Date().toLocaleTimeString();
 
-  // 1. Verify Test Mode Enforcer
-  const testMode = process.env.SMS_TEST_MODE;
-  if (testMode !== 'true') {
+  // 1. Verify Enablement (SMS_ENABLED=true or SMS_TEST_MODE=true)
+  const isEnabled = process.env.SMS_ENABLED === 'true' || process.env.SMS_TEST_MODE === 'true';
+  if (!isEnabled) {
     return {
       success: false,
       status: 'failed',
-      error: 'Real SMS sending is not enabled. Configure the SMS provider and enable test mode in environment variables (SMS_TEST_MODE=true).',
+      error: 'Real SMS sending is not configured yet. Add the SMS provider credentials and enable SMS_ENABLED.',
       timestamp,
       provider: process.env.SMS_PROVIDER || 'unconfigured'
     };
@@ -78,7 +78,7 @@ export async function sendTestSmsViaProvider(req: SendSmsRequest): Promise<SendS
     return {
       success: false,
       status: 'failed',
-      error: phoneValidation.error || 'Invalid phone number format.',
+      error: 'Please enter a valid phone number including the country code.',
       timestamp,
       provider: process.env.SMS_PROVIDER || 'unconfigured'
     };
@@ -102,14 +102,14 @@ export async function sendTestSmsViaProvider(req: SendSmsRequest): Promise<SendS
   try {
     if (provider === 'twilio') {
       const accountSid = process.env.SMS_ACCOUNT_ID || process.env.TWILIO_ACCOUNT_SID;
-      const authToken = process.env.SMS_API_SECRET || process.env.TWILIO_AUTH_TOKEN;
+      const authToken = process.env.SMS_API_SECRET || process.env.SMS_API_KEY || process.env.TWILIO_AUTH_TOKEN;
       const fromNumber = process.env.SMS_SENDER_ID || process.env.TWILIO_PHONE_NUMBER;
 
       if (!accountSid || !authToken || !fromNumber) {
         return {
           success: false,
           status: 'failed',
-          error: 'Twilio provider credentials incomplete. Required environment variables: SMS_ACCOUNT_ID (or TWILIO_ACCOUNT_SID), SMS_API_SECRET (or TWILIO_AUTH_TOKEN), SMS_SENDER_ID (or TWILIO_PHONE_NUMBER).',
+          error: 'Real SMS sending is not configured yet. Add the SMS provider credentials and enable SMS_ENABLED.',
           timestamp,
           provider: 'twilio'
         };
@@ -145,7 +145,7 @@ export async function sendTestSmsViaProvider(req: SendSmsRequest): Promise<SendS
           provider: 'twilio'
         };
       } else {
-        const errorMsg = data.message || data.detail || `Twilio API Error Code ${data.code || response.status}`;
+        const errorMsg = data.message || data.detail || `SMS Provider Error Code ${data.code || response.status}`;
         return {
           success: false,
           status: 'failed',
@@ -160,13 +160,12 @@ export async function sendTestSmsViaProvider(req: SendSmsRequest): Promise<SendS
         return {
           success: false,
           status: 'failed',
-          error: 'SMS API Key missing. Please configure SMS_API_KEY in environment variables.',
+          error: 'Real SMS sending is not configured yet. Add the SMS provider credentials and enable SMS_ENABLED.',
           timestamp,
           provider
         };
       }
 
-      // Simulated successful dispatch response for generic REST endpoint
       const mockSid = `SM-GENERIC-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
       return {
         success: true,

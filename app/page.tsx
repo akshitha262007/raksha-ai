@@ -119,7 +119,7 @@ export default function Page() {
   const [testPhoneNumber, setTestPhoneNumber] = useState<string>('+919876543210');
   const [phoneValidationError, setPhoneValidationError] = useState<string | null>(null);
   
-  const defaultTestMessage = `RAKSHA AI — TEST ALERT\n\nThis is a demonstration of the Citizen Early Warning System.\n\nSimulated hazard: Extreme Landslide Risk\nLocation: Zone 4\n\nNO EMERGENCY ACTION IS REQUIRED.`;
+  const defaultTestMessage = `RAKSHA AI — TEST ALERT\nThis is a demonstration of the Raksha AI Citizen Early Warning System.\nSimulated landslide risk: EXTREME\nLocation: Zone 4\nNO EMERGENCY ACTION IS REQUIRED.`;
   const [testMessageText, setTestMessageText] = useState<string>(defaultTestMessage);
 
   // Confirmation Modal State

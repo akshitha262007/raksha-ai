@@ -3,13 +3,13 @@ import { sendTestSmsViaProvider, validatePhoneNumber } from '@/lib/services/sms/
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Verify Test Mode Requirement
-    const testMode = process.env.SMS_TEST_MODE;
-    if (testMode !== 'true') {
+    // 1. Verify Enablement (SMS_ENABLED=true or SMS_TEST_MODE=true)
+    const isEnabled = process.env.SMS_ENABLED === 'true' || process.env.SMS_TEST_MODE === 'true';
+    if (!isEnabled) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Real SMS sending is not enabled. Configure the SMS provider and enable test mode in environment variables (SMS_TEST_MODE=true).' 
+          error: 'Real SMS sending is not configured yet. Add the SMS provider credentials and enable SMS_ENABLED.' 
         },
         { status: 400 }
       );
@@ -17,30 +17,31 @@ export async function POST(req: NextRequest) {
 
     // 2. Parse JSON Request Body
     const body = await req.json();
-    const { recipient, message } = body;
+    const recipientPhone = body.phoneNumber || body.recipient;
+    const messageContent = body.message;
 
     // Safety Enforcer: Reject Bulk / Array Recipient Requests
-    if (Array.isArray(recipient) || typeof recipient !== 'string') {
+    if (Array.isArray(recipientPhone) || typeof recipientPhone !== 'string' || !recipientPhone.trim()) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Bulk SMS sending is blocked on this MVP endpoint. Only one single recipient phone number is allowed.' 
+          error: 'Please enter a valid phone number including the country code.' 
         },
         { status: 400 }
       );
     }
 
     // 3. Validate Phone Number Format
-    const phoneCheck = validatePhoneNumber(recipient);
+    const phoneCheck = validatePhoneNumber(recipientPhone);
     if (!phoneCheck.isValid) {
       return NextResponse.json(
-        { success: false, error: phoneCheck.error },
+        { success: false, error: 'Please enter a valid phone number including the country code.' },
         { status: 400 }
       );
     }
 
     // 4. Validate Message Body
-    if (!message || typeof message !== 'string' || !message.trim()) {
+    if (!messageContent || typeof messageContent !== 'string' || !messageContent.trim()) {
       return NextResponse.json(
         { success: false, error: 'Test message content is required.' },
         { status: 400 }
@@ -49,8 +50,8 @@ export async function POST(req: NextRequest) {
 
     // 5. Dispatch via Server-Side SMS Service
     const result = await sendTestSmsViaProvider({
-      recipient,
-      message
+      recipient: recipientPhone,
+      message: messageContent
     });
 
     if (!result.success) {
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       messageId: result.messageId,
-      status: result.status,
+      status: result.status || 'Submitted',
       timestamp: result.timestamp,
       provider: result.provider
     });
