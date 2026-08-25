@@ -21,6 +21,7 @@ import {
   generateMultilingualCitizenAlert
 } from '@/lib/engine';
 import { maskPhoneNumber } from '@/lib/services/sms/smsService';
+import { registerDeviceForPushNotifications, onForegroundPushNotification } from '@/lib/firebase';
 
 export interface RealSmsRecord {
   id: string;
@@ -30,6 +31,17 @@ export interface RealSmsRecord {
   messageText: string;
   status: 'Submitted' | 'Delivered' | 'Failed';
   type: 'TEST';
+  messageId?: string;
+  error?: string;
+}
+
+export interface PushNotificationRecord {
+  id: string;
+  time: string;
+  title: string;
+  body: string;
+  status: 'Preparing' | 'Sending' | 'Sent' | 'Failed';
+  deviceName: string;
   messageId?: string;
   error?: string;
 }
@@ -365,6 +377,27 @@ export function useDisasterData() {
   const [dataSources, setDataSources] = useState<DataSourceChannel[]>(DEFAULT_DATA_SOURCES);
   const [groundVerificationState, setGroundVerificationState] = useState<'Idle' | 'Requested' | 'Confirmed'>('Idle');
 
+  // Firebase Web Push State
+  const [deviceToken, setDeviceToken] = useState<string | null>(null);
+  const [deviceName, setDeviceName] = useState<string | null>(null);
+  const [isRegisteringPush, setIsRegisteringPush] = useState<boolean>(false);
+  const [pushRegistrationError, setPushRegistrationError] = useState<string | null>(null);
+
+  const [pushState, setPushState] = useState<{
+    sending: boolean;
+    statusText: 'Preparing' | 'Sending' | 'Sent' | 'Failed';
+    success: boolean | null;
+    messageId?: string;
+    error?: string;
+    timestamp?: string;
+  }>({
+    sending: false,
+    statusText: 'Preparing',
+    success: null
+  });
+
+  const [pushHistory, setPushHistory] = useState<PushNotificationRecord[]>([]);
+
   const [realSmsHistory, setRealSmsHistory] = useState<RealSmsRecord[]>([
     {
       id: 'sms-hist-1',
@@ -476,6 +509,136 @@ export function useDisasterData() {
     };
     setLogs(prev => [newEntry, ...prev.slice(0, 59)]);
   }, []);
+
+  // Firebase Foreground Listener Setup
+  useEffect(() => {
+    const unsubscribe = onForegroundPushNotification((payload) => {
+      addLog('ALERT', `🔔 FOREGROUND PUSH RECEIVED: ${payload.notification?.title || payload.data?.title}`, payload.notification?.body || payload.data?.body);
+    });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [addLog]);
+
+  // Register Device for Push Notifications
+  const registerPushDevice = useCallback(async () => {
+    setIsRegisteringPush(true);
+    setPushRegistrationError(null);
+
+    const res = await registerDeviceForPushNotifications();
+
+    if (res.success && res.token) {
+      setDeviceToken(res.token);
+      setDeviceName(res.deviceName || 'Demo Registered Browser');
+      setIsRegisteringPush(false);
+      addLog('INFO', '🟢 FIREBASE WEB PUSH REGISTERED: FCM Device Token active.', `Device: ${res.deviceName}`);
+    } else {
+      setIsRegisteringPush(false);
+      setPushRegistrationError(res.error || 'Failed to register push device.');
+      addLog('WARNING', '🔴 FIREBASE WEB PUSH REGISTRATION FAILED', res.error);
+    }
+  }, [addLog]);
+
+  const unregisterPushDevice = useCallback(() => {
+    setDeviceToken(null);
+    setDeviceName(null);
+    addLog('INFO', '🟡 FIREBASE WEB PUSH UNREGISTERED: Device token cleared.');
+  }, [addLog]);
+
+  // Send REAL Push Notification (POST /api/send-push-test)
+  const sendRealPushNotification = useCallback(async (title: string, bodyText: string, alertData?: any) => {
+    if (!deviceToken) {
+      setPushState({
+        sending: false,
+        statusText: 'Failed',
+        success: false,
+        error: 'No registered device token found. Please click [ REGISTER THIS DEVICE ] first.'
+      });
+      return;
+    }
+
+    setPushState({
+      sending: true,
+      statusText: 'Sending',
+      success: null
+    });
+
+    const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    try {
+      const res = await fetch('/api/send-push-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceToken,
+          title,
+          body: bodyText,
+          data: alertData || {
+            hazard: 'landslide',
+            severity: 'extreme',
+            location: 'Zone 4 — Tawang Sector 4'
+          }
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setPushState({
+          sending: false,
+          statusText: 'Sent',
+          success: true,
+          messageId: data.messageId,
+          timestamp: timeNow
+        });
+
+        const newPushRecord: PushNotificationRecord = {
+          id: `push-hist-${Date.now()}`,
+          time: timeNow,
+          title,
+          body: bodyText,
+          status: 'Sent',
+          deviceName: deviceName || 'Registered Demo Device',
+          messageId: data.messageId
+        };
+
+        setPushHistory(prev => [newPushRecord, ...prev]);
+        addLog('ALERT', `🔔 REAL PUSH NOTIFICATION SENT: ${title}`, `FCM Reference: ${data.messageId}`);
+      } else {
+        const errorMsg = data.error || 'Failed to dispatch push notification.';
+        setPushState({
+          sending: false,
+          statusText: 'Failed',
+          success: false,
+          error: errorMsg,
+          timestamp: timeNow
+        });
+
+        const newFailedRecord: PushNotificationRecord = {
+          id: `push-hist-${Date.now()}`,
+          time: timeNow,
+          title,
+          body: bodyText,
+          status: 'Failed',
+          deviceName: deviceName || 'Registered Demo Device',
+          error: errorMsg
+        };
+
+        setPushHistory(prev => [newFailedRecord, ...prev]);
+        addLog('WARNING', `🔴 FIREBASE PUSH DISPATCH FAILED`, errorMsg);
+      }
+    } catch (err: any) {
+      const errorMsg = `API Request Error: ${err?.message || 'Connection failure'}`;
+      setPushState({
+        sending: false,
+        statusText: 'Failed',
+        success: false,
+        error: errorMsg,
+        timestamp: timeNow
+      });
+      addLog('WARNING', `🔴 FIREBASE PUSH EXCEPTION`, errorMsg);
+    }
+  }, [deviceToken, deviceName, addLog]);
 
   // Multi-Source Actions
   const toggleDataSource = useCallback((sourceId: string) => {
@@ -736,11 +899,9 @@ export function useDisasterData() {
           matchedVoice = voices.find(v => v.lang.toLowerCase().startsWith('bn') || v.name.toLowerCase().includes('bengali'));
         }
         if (!matchedVoice && (lang === 'as' || lang === 'mn')) {
-          // Fallback Assamese / Manipuri to Bengali or Hindi voice if specific font voice absent
           matchedVoice = voices.find(v => v.lang.toLowerCase().startsWith('bn') || v.lang.toLowerCase().startsWith('hi'));
         }
         if (!matchedVoice && lang === 'ne') {
-          // Fallback Nepali to Hindi voice (shares Devanagari script)
           matchedVoice = voices.find(v => v.lang.toLowerCase().startsWith('ne') || v.lang.toLowerCase().startsWith('hi'));
         }
 
@@ -955,6 +1116,12 @@ export function useDisasterData() {
     dataSources,
     sensorFusion,
     groundVerificationState,
+    deviceToken,
+    deviceName,
+    isRegisteringPush,
+    pushRegistrationError,
+    pushState,
+    pushHistory,
     isOptimizing,
     isAutoStreamActive,
     isGatewaySimulating,
@@ -968,6 +1135,9 @@ export function useDisasterData() {
     toggleDataSource,
     simulateSatelliteFailure,
     requestGroundVerification,
+    registerPushDevice,
+    unregisterPushDevice,
+    sendRealPushNotification,
     executeOptimization,
     addCitizenReport,
     toggleAutoStream,

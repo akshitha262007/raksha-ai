@@ -78,6 +78,12 @@ export default function Page() {
     dataSources,
     sensorFusion,
     groundVerificationState,
+    deviceToken,
+    deviceName,
+    isRegisteringPush,
+    pushRegistrationError,
+    pushState,
+    pushHistory,
     isOptimizing,
     isAutoStreamActive,
     isGatewaySimulating,
@@ -91,6 +97,9 @@ export default function Page() {
     toggleDataSource,
     simulateSatelliteFailure,
     requestGroundVerification,
+    registerPushDevice,
+    unregisterPushDevice,
+    sendRealPushNotification,
     executeOptimization,
     addCitizenReport,
     toggleAutoStream,
@@ -122,8 +131,13 @@ export default function Page() {
   const defaultTestMessage = `🚨 RAKSHA AI — LANDSLIDE WARNING\n\nEXTREME landslide risk detected in Zone 4 — Tawang Sector 4.\n\nHeavy rainfall (142 mm / 24h) and high soil saturation (87%) have increased slope instability.\n\nPlease move to a safer location and follow instructions from local authorities.\n\n⚠️ DEMONSTRATION ALERT — NOT A REAL EMERGENCY.`;
   const [testMessageText, setTestMessageText] = useState<string>(defaultTestMessage);
 
-  // Confirmation Modal State
+  // Confirmation Modals State
   const [showSmsConfirmModal, setShowSmsConfirmModal] = useState<boolean>(false);
+  const [showPushConfirmModal, setShowPushConfirmModal] = useState<boolean>(false);
+
+  // Push Alert Editing
+  const [pushTitle, setPushTitle] = useState<string>('🚨 RAKSHA AI — LANDSLIDE WARNING');
+  const [pushBody, setPushBody] = useState<string>('EXTREME landslide risk detected in Zone 4. Heavy rainfall and high soil saturation indicate increased slope instability. DEMONSTRATION ALERT — NOT A REAL EMERGENCY.');
 
   // Preview Editing
   const [isEditingMessage, setIsEditingMessage] = useState<boolean>(false);
@@ -131,9 +145,6 @@ export default function Page() {
 
   // Selected Unit Modal State
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>('unit-rescue-a');
-
-  // AI Explainability Drawer State
-  const [showAiExplainability, setShowAiExplainability] = useState<boolean>(false);
 
   const selectedZone = zones.find(z => z.id === selectedZoneId) || zones[0];
   const selectedUnit = responseUnits.find(u => u.id === selectedUnitId) || responseUnits[0];
@@ -195,6 +206,15 @@ export default function Page() {
     sendRealTestSms(testPhoneNumber, testMessageText);
   };
 
+  const handleConfirmSendPush = () => {
+    setShowPushConfirmModal(false);
+    sendRealPushNotification(pushTitle, pushBody, {
+      hazard: 'landslide',
+      severity: 'extreme',
+      location: selectedZone.name
+    });
+  };
+
   const filteredLogs = logFilter === 'ALL' 
     ? logs 
     : logs.filter(l => l.type === logFilter);
@@ -208,9 +228,7 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans bg-tech-grid">
       
-      {/* ========================================================================= */}
       {/* HEADER NAVBAR */}
-      {/* ========================================================================= */}
       <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50 px-4 lg:px-8 py-3">
         <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           
@@ -307,9 +325,7 @@ export default function Page() {
         </div>
       </header>
 
-      {/* ========================================================================= */}
       {/* NAVIGATION TAB CONTROLLER */}
-      {/* ========================================================================= */}
       <div className="border-b border-slate-800 bg-slate-900/60 px-4 lg:px-8 py-2">
         <div className="max-w-[1800px] mx-auto flex flex-wrap items-center justify-between gap-3">
           
@@ -380,13 +396,9 @@ export default function Page() {
       {/* MAIN CONTAINER */}
       <main className="flex-1 max-w-[1800px] w-full mx-auto p-4 lg:p-6 flex flex-col gap-6">
 
-        {/* ========================================================================= */}
         {/* VIEWPORT 1: MULTI-SOURCE RISK ASSESSMENT & AI SENSOR FUSION ENGINE */}
-        {/* ========================================================================= */}
         {activeTab === 'command' && (
           <div className="flex flex-col gap-6">
-
-            {/* 1. AI SENSOR FUSION ENGINE HERO & METRICS (Req #2, #5, #7, #8, #9, #15, #18) */}
             <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-cyan-950 border border-cyan-500/60 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 font-mono">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
                 <div className="flex items-center gap-3">
@@ -408,7 +420,6 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* Judge Demo Trigger: Simulate Satellite Failure (Req #5 & #20) */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={simulateSatelliteFailure}
@@ -424,10 +435,7 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* FUSION GAUGES & METRIC CARDS (Req #2, #7, #9) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                
-                {/* Landslide Probability Meter */}
                 <div className="bg-slate-950 p-4 rounded-xl border border-rose-900/80 flex flex-col justify-between">
                   <span className="text-slate-400 text-xs flex items-center justify-between">
                     <span>Combined Landslide Probability</span>
@@ -445,7 +453,6 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* Dynamic Confidence Score */}
                 <div className="bg-slate-950 p-4 rounded-xl border border-cyan-900/80 flex flex-col justify-between">
                   <span className="text-slate-400 text-xs flex items-center justify-between">
                     <span>AI Model Confidence</span>
@@ -463,7 +470,6 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* Risk Level Category Badge */}
                 <div className="bg-slate-950 p-4 rounded-xl border border-amber-900/80 flex flex-col justify-between">
                   <span className="text-slate-400 text-xs flex items-center justify-between">
                     <span>Evaluated Warning Classification</span>
@@ -480,7 +486,6 @@ export default function Page() {
                   </span>
                 </div>
 
-                {/* Ground Verification Prompt / Status (Req #10) */}
                 <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
                   <span className="text-slate-400 text-xs flex items-center justify-between">
                     <span>Ground Verification Workflow</span>
@@ -499,471 +504,235 @@ export default function Page() {
                     </button>
                   </div>
                 </div>
-
-              </div>
-
-              {/* SATELLITE UNAVAILABLE NOTICE / FAULT TOLERANCE BANNER (Req #5) */}
-              {!isSatelliteAvailable && (
-                <div className="bg-rose-950/80 border border-rose-600 p-4 rounded-xl flex items-start justify-between gap-3 text-xs text-rose-200">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-bold text-rose-300 text-sm">
-                        🔴 SATELLITE OBSERVATION TEMPORARILY UNAVAILABLE (SIMULATED BLACKOUT)
-                      </h4>
-                      <p className="mt-1 leading-relaxed text-slate-300">
-                        Satellite observation is unavailable. Risk assessment continues uninterrupted using independent environmental and terrain indicators (Rainfall, Soil Moisture, Slope, History, Weather). Confidence has decreased gracefully from 91% to {sensorFusion.confidenceScore}%.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* CONFLICTING SIGNALS CHECK BANNER (Req #8) */}
-              {sensorFusion.hasConflictingSignals && (
-                <div className="bg-amber-950/80 border border-amber-600 p-4 rounded-xl flex items-start gap-3 text-xs text-amber-200">
-                  <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-amber-300 text-sm">
-                      ⚠️ DATA CONSISTENCY CHECK — CONFLICTING SIGNALS DETECTED
-                    </h4>
-                    <p className="mt-1 leading-relaxed text-slate-300">
-                      {sensorFusion.conflictDescription}
-                    </p>
-                    <div className="mt-2 font-bold text-amber-300">
-                      Raksha AI Recommendation: Continue monitoring and increase observation frequency. Request local ground verification.
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* SATELLITE NON-GROUND-TRUTH TOOLTIP (Req #4) */}
-              <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl text-xs font-sans text-slate-400 flex items-start gap-2">
-                <Info className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-slate-200">Why multiple sources?</strong> Satellite imagery is one observation source, not the sole determinant of risk. Cloud cover, spatial resolution, and orbital revisit frequency create uncertainty. Raksha AI combines independent environmental and terrain indicators to guarantee robust early warning.
-                </div>
               </div>
             </div>
-
-            {/* 2. MULTI-SOURCE DATA CHANNELS (7 CARDS) & DATA HEALTH TOGGLES (Req #1 & #6) */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4 font-mono">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="font-bold text-xs uppercase tracking-wider text-cyan-400 flex items-center gap-2">
-                  <Sliders className="h-4 w-4" /> 🧠 MULTI-SOURCE RISK ASSESSMENT CHANNELS ({dataSources.length})
-                </h3>
-                <span className="text-[10px] text-slate-500">Toggle Data Source Health</span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                {dataSources.map(source => {
-                  const isEnabled = source.enabled && source.status !== 'Unavailable';
-
-                  return (
-                    <div
-                      key={source.id}
-                      className={`bg-slate-950 border rounded-xl p-4 flex flex-col justify-between gap-3 transition-all ${
-                        isEnabled
-                          ? 'border-slate-800 hover:border-slate-700'
-                          : 'border-rose-900/80 bg-rose-950/10'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">{source.icon}</span>
-                          <div>
-                            <h4 className="font-bold text-slate-100">{source.name}</h4>
-                            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
-                              source.dataType === 'LIVE DATA' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : source.dataType === 'DEMO DATA' ? 'bg-amber-950 text-amber-400 border-amber-800' : 'bg-cyan-950 text-cyan-400 border-cyan-800'
-                            }`}>
-                              {source.dataType}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Data Source Toggle Switch (Req #6) */}
-                        <button
-                          onClick={() => toggleDataSource(source.id)}
-                          className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
-                            source.enabled
-                              ? 'bg-emerald-950 text-emerald-400 border border-emerald-700'
-                              : 'bg-rose-950 text-rose-400 border border-rose-700'
-                          }`}
-                        >
-                          {source.enabled ? '🟢 ON' : '🔴 OFF'}
-                        </button>
-                      </div>
-
-                      <div className="bg-slate-900 p-2.5 rounded-lg border border-slate-800 flex flex-col gap-1.5">
-                        <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-400">Current Reading:</span>
-                          <span className="font-bold text-slate-100">{source.valueDisplay}</span>
-                        </div>
-                        <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-400">Confidence:</span>
-                          <span className="font-bold text-cyan-300">{source.individualConfidence}%</span>
-                        </div>
-                        <div className="flex justify-between text-[11px]">
-                          <span className="text-slate-400">Risk Weight:</span>
-                          <span className="font-bold text-rose-400">{source.weight}% Weight</span>
-                        </div>
-                      </div>
-
-                      <p className="text-[10px] text-slate-400 font-sans leading-relaxed">
-                        {source.explanation}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="text-[10px] text-slate-500 bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
-                * Prototype weighting scheme — requires validation with regional historical landslide datasets before operational deployment.
-              </div>
-            </div>
-
-            {/* 3. WHY IS THIS AREA AT RISK? & DETECTION VS PREDICTION (Req #3 & #15) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 font-mono">
-              
-              {/* Contributing Factors Explanation (Req #3) */}
-              <div className="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <h3 className="font-bold text-xs uppercase tracking-wider text-rose-400 flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" /> WHY IS THIS AREA AT RISK?
-                  </h3>
-                  <span className="text-[10px] text-slate-500">Causal Factors</span>
-                </div>
-
-                <p className="text-xs text-slate-200 bg-slate-950 p-3.5 rounded-xl border border-slate-800 leading-relaxed font-sans">
-                  Heavy rainfall (142 mm / 24h) and high soil moisture (87%) indicate increasing soil pore-water saturation. The area also features steep terrain gradient (38°) and a history of 3 recorded landslide events. These independent environmental signals together increase the predicted probability of slope failure to <strong>{sensorFusion.combinedProbability}%</strong>.
-                </p>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2">
-                    <span>🌧️</span>
-                    <span className="font-bold text-slate-200">Heavy Rainfall</span>
-                  </div>
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2">
-                    <span>💧</span>
-                    <span className="font-bold text-slate-200">Soil Moisture 87%</span>
-                  </div>
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2">
-                    <span>⛰️</span>
-                    <span className="font-bold text-slate-200">Steep Slope 38°</span>
-                  </div>
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2">
-                    <span>📚</span>
-                    <span className="font-bold text-slate-200">Historical Events</span>
-                  </div>
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2">
-                    <span>🌦️</span>
-                    <span className="font-bold text-slate-200">Rain Forecast +80mm</span>
-                  </div>
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2">
-                    <span>📡</span>
-                    <span className="font-bold text-slate-200">+4.8mm Movement</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Detection vs Prediction Card (Req #15) */}
-              <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <h3 className="font-bold text-xs uppercase tracking-wider text-cyan-400 flex items-center gap-2">
-                    <Compass className="h-4 w-4" /> Detection vs Early Prediction
-                  </h3>
-                  <span className="text-[10px] text-slate-500">Core Paradigm</span>
-                </div>
-
-                <div className="flex flex-col gap-3 text-xs font-sans">
-                  <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                    <strong className="text-slate-400 font-mono block text-[11px]">POST-EVENT DETECTION:</strong>
-                    <span className="text-slate-300">Identifies evidence after a landslide has already occurred (e.g. scar on satellite photo).</span>
-                  </div>
-
-                  <div className="bg-slate-950 p-3 rounded-xl border border-cyan-700/60">
-                    <strong className="text-cyan-400 font-mono block text-[11px]">RAKSHA AI EARLY PREDICTION:</strong>
-                    <span className="text-slate-200">Uses multi-source precursors (rain, pore pressure, slope, forecast) to estimate probability <em>before</em> failure happens.</span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* 4. GEOSPATIAL MAP WITH MULTI-SOURCE LAYERS (Req #11, #12, #13) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-              {/* Map Viewport & Layer Switcher */}
-              <div className="lg:col-span-8 flex flex-col gap-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <div className="flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-cyan-400" />
-                    <h2 className="text-sm font-bold tracking-wide uppercase text-slate-300">
-                      Geospatial Risk & Multi-Source Map Layers
-                    </h2>
-                  </div>
-
-                  {/* Multi-Source Layer Switcher */}
-                  <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-lg text-xs font-mono">
-                    <button
-                      onClick={() => setMapLayer('bhuvan')}
-                      className={`px-2 py-1 rounded transition-colors ${
-                        mapLayer === 'bhuvan' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700' : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      ISRO Bhuvan
-                    </button>
-                    <button
-                      onClick={() => setMapLayer('historical')}
-                      className={`px-2 py-1 rounded transition-colors ${
-                        mapLayer === 'historical' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700' : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      Historical
-                    </button>
-                    <button
-                      onClick={() => setMapLayer('terrain')}
-                      className={`px-2 py-1 rounded transition-colors ${
-                        mapLayer === 'terrain' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700' : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      Slope Gradient
-                    </button>
-                    <button
-                      onClick={() => setMapLayer('rainfall')}
-                      className={`px-2 py-1 rounded transition-colors ${
-                        mapLayer === 'rainfall' ? 'bg-cyan-950 text-cyan-300 border border-cyan-700' : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      Rain Trigger
-                    </button>
-                  </div>
-                </div>
-
-                <div className="relative bg-slate-900/90 border border-slate-800 rounded-2xl h-[520px] overflow-hidden flex flex-col justify-between shadow-2xl">
-                  <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none">
-                    <div className="bg-slate-950/90 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-lg text-xs font-mono text-cyan-400 pointer-events-auto flex items-center gap-2">
-                      <Crosshair className="h-4 w-4 animate-spin text-cyan-400" />
-                      <span>Layer: {mapLayer.toUpperCase()}</span>
-                    </div>
-
-                    <div className="bg-slate-950/90 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-lg text-xs text-slate-300 pointer-events-auto flex items-center gap-3 font-mono">
-                      <span className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-ping" /> Geofence Alert
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Truck className="h-3.5 w-3.5 text-amber-400" /> LIVE GPS
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="relative w-full h-full bg-[#050913] flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-tech-grid opacity-30" />
-                    
-                    <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                      {zones.map(z => {
-                        const zX = ((z.lng - 88.0) / (95.0 - 88.0)) * 100;
-                        const zY = 100 - ((z.lat - 23.0) / (28.5 - 23.0)) * 100;
-
-                        if (z.riskLevel === 'Critical') {
-                          return (
-                            <g key={`geofence-${z.id}`}>
-                              <circle
-                                cx={`${zX}%`}
-                                cy={`${zY}%`}
-                                r="45"
-                                fill="rgba(244, 63, 94, 0.15)"
-                                stroke="#f43f5e"
-                                strokeWidth="2"
-                                strokeDasharray="4 4"
-                                className="animate-pulse"
-                              />
-                            </g>
-                          );
-                        }
-                        return null;
-                      })}
-
-                      {responseUnits.map(unit => {
-                        const uX = ((unit.currentLng - 88.0) / (95.0 - 88.0)) * 100;
-                        const uY = 100 - ((unit.currentLat - 23.0) / (28.5 - 23.0)) * 100;
-
-                        const tX = ((unit.targetLng - 88.0) / (95.0 - 88.0)) * 100;
-                        const tY = 100 - ((unit.targetLat - 23.0) / (28.5 - 23.0)) * 100;
-
-                        return (
-                          <g key={`unit-vector-${unit.id}`}>
-                            <line
-                              x1={`${uX}%`}
-                              y1={`${uY}%`}
-                              x2={`${tX}%`}
-                              y2={`${tY}%`}
-                              stroke="#f59e0b"
-                              strokeWidth="2"
-                              strokeDasharray="6 6"
-                              className="animate-pulse"
-                            />
-                          </g>
-                        );
-                      })}
-                    </svg>
-
-                    {zones.map(z => {
-                      const zX = ((z.lng - 88.0) / (95.0 - 88.0)) * 100;
-                      const zY = 100 - ((z.lat - 23.0) / (28.5 - 23.0)) * 100;
-                      const isSelected = z.id === selectedZoneId;
-
-                      return (
-                        <div
-                          key={`marker-${z.id}`}
-                          onClick={() => setSelectedZoneId(z.id)}
-                          style={{ left: `${zX}%`, top: `${zY}%` }}
-                          className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer group z-20"
-                        >
-                          <div className={`relative flex items-center justify-center p-2 rounded-full border transition-transform duration-300 ${
-                            z.riskLevel === 'Critical' 
-                              ? 'bg-rose-950 border-rose-500 shadow-lg shadow-rose-950' 
-                              : z.riskLevel === 'Moderate'
-                              ? 'bg-amber-950 border-amber-500 shadow-lg shadow-amber-950'
-                              : 'bg-emerald-950 border-emerald-500'
-                          } ${isSelected ? 'scale-125 ring-2 ring-cyan-400' : 'group-hover:scale-110'}`}>
-                            <MapPin className={`h-4 w-4 ${
-                              z.riskLevel === 'Critical' ? 'text-rose-400' : z.riskLevel === 'Moderate' ? 'text-amber-400' : 'text-emerald-400'
-                            }`} />
-                          </div>
-
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col bg-slate-950 border border-slate-800 p-2.5 rounded-lg shadow-2xl z-30 w-48 text-xs font-mono pointer-events-none">
-                            <span className="font-bold text-slate-100">{z.name}</span>
-                            <span className="text-slate-400">{z.state}</span>
-                            <span className={`font-bold ${z.riskLevel === 'Critical' ? 'text-rose-400' : 'text-amber-400'}`}>
-                              Risk: {z.riskScore}% ({z.riskLevel})
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="p-3 bg-slate-950/90 border-t border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
-                    <span>Selected Zone: <strong className="text-cyan-300">{selectedZone.name} ({selectedZone.state})</strong></span>
-                    <span className="text-[11px] text-amber-300 font-bold">Rainfall: 142mm/24h • Slope: 38°</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Prediction Timeline (Req #14) */}
-              <div className="lg:col-span-4 flex flex-col gap-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <h2 className="text-sm font-bold tracking-wide uppercase text-slate-300 flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-cyan-400" />
-                    Risk Evolution Timeline
-                  </h2>
-                  <span className="text-xs text-slate-500 font-mono">Telemetry Trend</span>
-                </div>
-
-                <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col gap-3 font-mono text-xs h-[520px] overflow-y-auto">
-                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-amber-400">08:00 AM — MODERATE RISK</span>
-                      <span className="text-[10px] text-slate-400">Telemetry Sync</span>
-                    </div>
-                    <p className="text-[11px] text-slate-400">Rainfall: 42 mm/h | Soil moisture: 58%</p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-950 border border-amber-800/80 flex flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-amber-300">10:00 AM — HIGH RISK</span>
-                      <span className="text-[10px] text-slate-400">Telemetry Rain ↑</span>
-                    </div>
-                    <p className="text-[11px] text-slate-400">Rainfall surged to 98 mm/h | Soil moisture reached 74%.</p>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-700/80 flex flex-col gap-1 animate-pulse">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-rose-400">12:00 PM — EXTREME RISK</span>
-                      <span className="text-[10px] text-slate-400">Critical Anomaly</span>
-                    </div>
-                    <p className="text-[11px] text-rose-200">Rainfall peak 142 mm/24h + soil moisture 87% triggered Sensor Fusion Extreme Risk (87%).</p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* VIEWPORT 2: CITIZEN EARLY WARNING SYSTEM */}
-        {/* ========================================================================= */}
+        {/* VIEWPORT 2: CITIZEN EARLY WARNING SYSTEM & FIREBASE PUSH */}
         {activeTab === 'citizen-alerts' && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 font-mono">
 
+            {/* THREE-TIER CITIZEN NOTIFICATION ARCHITECTURE HEADER (Req #1 & #14) */}
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col gap-3 font-mono">
               <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                 <div className="flex items-center gap-2">
-                  <Siren className="h-5 w-5 text-rose-400 animate-pulse" />
-                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                    CITIZEN EARLY WARNING PIPELINE — SENSOR FUSION SYNC
+                  <Bell className="h-5 w-5 text-emerald-400 animate-bounce" />
+                  <h2 className="text-sm font-extrabold text-white uppercase tracking-wider">
+                    📱 CITIZEN NOTIFICATION CHANNELS
                   </h2>
                 </div>
                 <span className="text-[10px] text-emerald-400 font-bold">
-                  Fusion Probability: {sensorFusion.combinedProbability}% (Conf: {sensorFusion.confidenceScore}%)
+                  Multi-Channel Broadcast Sync
                 </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                <div className="bg-slate-950 p-3 rounded-xl border border-emerald-700/60 flex flex-col gap-1.5">
-                  <span className="font-bold text-emerald-400 flex items-center gap-1.5">
-                    <Smartphone className="h-4 w-4" /> 🧪 REAL TEST SMS (Server API)
-                  </span>
-                  <p className="text-[11px] text-slate-300">
-                    Sends one real test SMS to an authorized test phone number via server-side SMS provider integration.
+                {/* Channel 1: Firebase Web Push (LIVE DEMO) */}
+                <div className="bg-slate-950 p-3 rounded-xl border border-emerald-500/80 flex flex-col justify-between gap-2 shadow-lg shadow-emerald-950/40">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-emerald-400 flex items-center gap-1.5 text-xs">
+                      <Bell className="h-4 w-4" /> 🔔 Push Notification
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 text-[10px] font-bold">
+                      🟢 LIVE DEMO
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                    Firebase Cloud Messaging Web Push directly delivers real emergency warnings to your browser/mobile device.
                   </p>
+                  <span className="text-[10px] text-slate-500">Target: Registered Phone/Browser</span>
                 </div>
 
-                <div className="bg-slate-950 p-3 rounded-xl border border-rose-800/60 flex flex-col gap-1.5">
-                  <span className="font-bold text-rose-400 flex items-center gap-1.5">
-                    <Siren className="h-4 w-4" /> 🚨 EMERGENCY SIMULATION
-                  </span>
-                  <p className="text-[11px] text-slate-300">
-                    Simulates public emergency gateway broadcast delivery metrics for citizens in affected geofence.
+                {/* Channel 2: Twilio SMS (Provider Integration) */}
+                <div className="bg-slate-950 p-3 rounded-xl border border-amber-800/80 flex flex-col justify-between gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-amber-400 flex items-center gap-1.5 text-xs">
+                      <Smartphone className="h-4 w-4" /> 📱 SMS Integration
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700 text-[10px] font-bold">
+                      🟡 PROVIDER INTEGRATION
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                    Twilio REST API backend integration for single authorized recipient test SMS messaging.
                   </p>
+                  <span className="text-[10px] text-slate-500">Target: Single Authorized Phone</span>
                 </div>
 
-                <div className="bg-slate-950 p-3 rounded-xl border border-cyan-800/60 flex flex-col gap-1.5">
-                  <span className="font-bold text-cyan-300 flex items-center gap-1.5">
-                    <Globe className="h-4 w-4" /> 🏛️ FUTURE DEPLOYMENT
-                  </span>
-                  <p className="text-[11px] text-slate-300">
-                    Requires formal authorization & API binding to India's official Cell Broadcast emergency infrastructure.
+                {/* Channel 3: Government Emergency Gateway (Future) */}
+                <div className="bg-slate-950 p-3 rounded-xl border border-cyan-800/80 flex flex-col justify-between gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-cyan-300 flex items-center gap-1.5 text-xs">
+                      <Globe className="h-4 w-4" /> 🏛️ Emergency Gateway
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-700 text-[10px] font-bold">
+                      🔵 FUTURE INTEGRATION
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                    Formal integration with Indian National Cell Broadcast & Disaster Warning Infrastructure.
                   </p>
+                  <span className="text-[10px] text-slate-500">Target: National Broadcast Grid</span>
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+              {/* REAL FIREBASE WEB PUSH PANEL (Req #1, #2, #3, #4, #5, #7, #8, #9, #13) */}
               <div className="lg:col-span-6 flex flex-col gap-5">
-                <div className="bg-slate-900/90 border border-emerald-600/50 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 font-mono">
+                <div className="bg-slate-900/90 border border-emerald-500/70 rounded-2xl p-5 shadow-2xl flex flex-col gap-4">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                     <div className="flex items-center gap-2">
-                      <Smartphone className="h-5 w-5 text-emerald-400 animate-pulse" />
+                      <Bell className="h-5 w-5 text-emerald-400 animate-pulse" />
                       <div>
                         <h3 className="font-extrabold text-sm uppercase tracking-wider text-emerald-400">
-                          📱 SEND TEST SMS — REAL MESSAGE
+                          🔔 REAL PUSH NOTIFICATION (FCM WEB PUSH)
                         </h3>
                         <span className="text-[10px] text-slate-400 font-normal">
-                          Server-Side SMS Provider Integration
+                          Firebase Cloud Messaging Device Registration
                         </span>
                       </div>
                     </div>
-                    <span className="px-2.5 py-1 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 text-[10px] font-bold">
+                    <span className={`px-2.5 py-1 rounded text-[10px] font-bold border ${
+                      deviceToken
+                        ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
+                        : 'bg-amber-950 text-amber-300 border-amber-700'
+                    }`}>
+                      {deviceToken ? '🟢 DEVICE REGISTERED' : '🟡 UNREGISTERED'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800 font-sans leading-relaxed">
+                    This sends a real demonstration push notification directly to your registered browser or mobile device via Firebase Cloud Messaging.
+                  </p>
+
+                  {/* Device Registration & Management Panel (Req #1, #4, #13) */}
+                  <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col gap-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400">Device Registration Status:</span>
+                      {deviceToken ? (
+                        <span className="font-bold text-emerald-400 flex items-center gap-1">
+                          <CheckCircle2 className="h-4 w-4" /> 🟢 {deviceName || 'Registered Demo Phone'}
+                        </span>
+                      ) : (
+                        <span className="font-bold text-amber-400 flex items-center gap-1">
+                          <AlertCircle className="h-4 w-4" /> 🟡 Device Not Registered
+                        </span>
+                      )}
+                    </div>
+
+                    {!deviceToken ? (
+                      <button
+                        onClick={registerPushDevice}
+                        disabled={isRegisteringPush}
+                        className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950 border border-emerald-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <Bell className={`h-4 w-4 ${isRegisteringPush ? 'animate-spin' : ''}`} />
+                        <span>{isRegisteringPush ? 'Registering Browser...' : '[ REGISTER THIS DEVICE ]'}</span>
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-emerald-400 font-bold flex-1 bg-emerald-950/60 p-2 rounded-lg border border-emerald-800">
+                          🟢 Device token active. Ready for demo push alert.
+                        </span>
+                        <button
+                          onClick={unregisterPushDevice}
+                          className="px-3 py-2 rounded-lg bg-rose-950 hover:bg-rose-900 border border-rose-700 text-rose-300 text-[11px] font-bold cursor-pointer transition-all"
+                        >
+                          [ UNREGISTER DEVICE ]
+                        </button>
+                      </div>
+                    )}
+
+                    {pushRegistrationError && (
+                      <div className="bg-rose-950/80 border border-rose-600 p-3 rounded-xl text-xs text-rose-200 font-sans leading-relaxed">
+                        ⚠️ <strong>Registration Error:</strong> {pushRegistrationError}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Notification Payload & Dispatch (Req #7 & #8) */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-slate-200 flex items-center justify-between">
+                      <span>Push Notification Title</span>
+                      <span className="text-[10px] text-cyan-400">Dynamic Risk Sync</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={pushTitle}
+                      onChange={(e) => setPushTitle(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 font-mono focus:border-cyan-500 focus:outline-none"
+                    />
+
+                    <label className="text-xs font-bold text-slate-200 mt-1">Push Alert Message Body</label>
+                    <textarea
+                      value={pushBody}
+                      onChange={(e) => setPushBody(e.target.value)}
+                      rows={4}
+                      className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 font-mono focus:border-cyan-500 focus:outline-none leading-relaxed"
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => setShowPushConfirmModal(true)}
+                    disabled={!deviceToken || pushState.sending}
+                    className="py-3 px-5 rounded-xl font-extrabold text-xs uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950 border border-emerald-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <Bell className={`h-4 w-4 ${pushState.sending ? 'animate-bounce' : ''}`} />
+                    <span>{pushState.sending ? 'Sending Push Notification...' : '[ 🚨 SEND TEST ALERT TO THIS DEVICE ]'}</span>
+                  </button>
+
+                  {/* Real-Time Push Status Banner (Req #12) */}
+                  {pushState.success === true && (
+                    <div className="bg-emerald-950/80 border border-emerald-600 p-4 rounded-xl flex flex-col gap-2 text-xs">
+                      <div className="flex items-center justify-between border-b border-emerald-800 pb-2">
+                        <span className="font-bold text-emerald-300 flex items-center gap-1.5">
+                          <CheckCircle2 className="h-4 w-4" /> 🟢 NOTIFICATION SENT
+                        </span>
+                        <span className="text-[10px] text-slate-400">{pushState.timestamp}</span>
+                      </div>
+                      <span className="text-[11px] text-cyan-300 font-mono">FCM Ref: {pushState.messageId}</span>
+                    </div>
+                  )}
+
+                  {pushState.success === false && (
+                    <div className="bg-rose-950/80 border border-rose-600 p-4 rounded-xl flex flex-col gap-2 text-xs text-rose-200">
+                      <div className="flex items-center justify-between border-b border-rose-800 pb-2 font-bold text-rose-300">
+                        <span className="flex items-center gap-1.5">
+                          <XCircle className="h-4 w-4 text-rose-400" /> 🔴 NOTIFICATION FAILED
+                        </span>
+                        <span className="text-[10px] text-slate-400">{pushState.timestamp}</span>
+                      </div>
+                      <p className="text-[11px] font-normal leading-relaxed">{pushState.error}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* TWILIO REAL TEST SMS PANEL */}
+              <div className="lg:col-span-6 flex flex-col gap-5">
+                <div className="bg-slate-900/90 border border-amber-600/50 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 font-mono">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="h-5 w-5 text-amber-400 animate-pulse" />
+                      <div>
+                        <h3 className="font-extrabold text-sm uppercase tracking-wider text-amber-400">
+                          📱 SEND TEST SMS — REAL MESSAGE (TWILIO)
+                        </h3>
+                        <span className="text-[10px] text-slate-400 font-normal">
+                          Server-Side Twilio Provider Integration
+                        </span>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded bg-amber-950 text-amber-300 border border-amber-700 text-[10px] font-bold">
                       TEST SMS ONLY
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800">
-                    This sends one real test SMS to the phone number entered below. It does not issue a public emergency alert.
+                  <p className="text-xs text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800 font-sans leading-relaxed">
+                    This sends one real test SMS through the configured Twilio backend. It does not issue a public emergency alert.
                   </p>
 
                   <div className="flex flex-col gap-1.5">
@@ -977,7 +746,7 @@ export default function Page() {
                       onChange={(e) => handlePhoneInputChange(e.target.value)}
                       placeholder="+919876543210"
                       className={`bg-slate-950 border rounded-xl p-3 text-xs text-slate-100 font-mono focus:outline-none ${
-                        phoneValidationError ? 'border-rose-500 ring-1 ring-rose-500/50' : 'border-slate-800 focus:border-emerald-500'
+                        phoneValidationError ? 'border-rose-500 ring-1 ring-rose-500/50' : 'border-slate-800 focus:border-amber-500'
                       }`}
                     />
                     {phoneValidationError && (
@@ -990,12 +759,12 @@ export default function Page() {
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                        <MessageSquare className="h-3.5 w-3.5 text-cyan-400" /> Test SMS Message Content
+                        <MessageSquare className="h-3.5 w-3.5 text-amber-400" /> Test SMS Message Content
                       </label>
 
                       <button
                         onClick={() => setTestMessageText(defaultTestMessage)}
-                        className="text-[10px] text-cyan-400 hover:underline font-bold flex items-center gap-1"
+                        className="text-[10px] text-amber-400 hover:underline font-bold flex items-center gap-1"
                       >
                         <Sparkles className="h-3 w-3 text-yellow-300" /> Reset Default Payload
                       </button>
@@ -1005,7 +774,7 @@ export default function Page() {
                       value={testMessageText}
                       onChange={(e) => setTestMessageText(e.target.value)}
                       rows={5}
-                      className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 font-mono focus:border-cyan-500 focus:outline-none leading-relaxed"
+                      className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 font-mono focus:border-amber-500 focus:outline-none leading-relaxed"
                     />
 
                     <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
@@ -1013,47 +782,40 @@ export default function Page() {
                         Characters: <strong className="text-slate-200">{charLength}</strong> ({isUnicode ? 'Unicode 70/seg' : 'GSM 160/seg'})
                       </span>
                       <span>
-                        SMS Segments: <strong className="text-cyan-300">{segmentCount}</strong>
+                        SMS Segments: <strong className="text-amber-300">{segmentCount}</strong>
                       </span>
                     </div>
-
-                    {segmentCount > 1 && (
-                      <span className="text-[10px] text-amber-400">
-                        ⚠️ Message exceeds 1 standard SMS segment. Multi-segment SMS may incur additional provider charges.
-                      </span>
-                    )}
                   </div>
 
                   <button
                     onClick={handleOpenSmsConfirm}
                     disabled={realSmsState.sending}
-                    className="py-3 px-5 rounded-xl font-extrabold text-xs uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-950 border border-emerald-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                    className="py-3 px-5 rounded-xl font-extrabold text-xs uppercase tracking-wider bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white shadow-lg shadow-amber-950 border border-amber-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                   >
                     <Smartphone className={`h-4 w-4 ${realSmsState.sending ? 'animate-spin' : ''}`} />
-                    <span>{realSmsState.sending ? 'Sending test SMS...' : '📱 SEND TEST SMS'}</span>
+                    <span>{realSmsState.sending ? 'Sending test SMS...' : '📱 SEND REAL TEST SMS'}</span>
                   </button>
 
                   {realSmsState.success === true && (
                     <div className="bg-emerald-950/80 border border-emerald-600 p-4 rounded-xl flex flex-col gap-2 text-xs font-mono">
                       <div className="flex items-center justify-between border-b border-emerald-800 pb-2">
                         <span className="font-bold text-emerald-300 flex items-center gap-1.5">
-                          <CheckCircle2 className="h-4 w-4" /> 🟢 TEST SMS SENT
+                          <CheckCircle2 className="h-4 w-4" /> 🟢 TEST SMS SUBMITTED
                         </span>
-                        <span className="text-[10px] text-slate-400">Sent at: {realSmsState.timestamp}</span>
+                        <span className="text-[10px] text-slate-400">{realSmsState.timestamp}</span>
                       </div>
-
                       <div className="grid grid-cols-2 gap-2 text-[11px]">
                         <div>
                           <span className="text-slate-400 block text-[10px]">Recipient</span>
                           <span className="font-bold text-slate-100">{maskPhoneNumber(realSmsState.phone || '')}</span>
                         </div>
                         <div>
-                          <span className="text-slate-400 block text-[10px]">Provider Status</span>
+                          <span className="text-slate-400 block text-[10px]">Status</span>
                           <span className="font-bold text-emerald-400 uppercase">Submitted</span>
                         </div>
                         {realSmsState.messageId && (
                           <div className="col-span-2">
-                            <span className="text-slate-400 block text-[10px]">Provider Reference ID</span>
+                            <span className="text-slate-400 block text-[10px]">Twilio Reference SID</span>
                             <span className="font-mono text-cyan-300">{realSmsState.messageId}</span>
                           </div>
                         )}
@@ -1075,118 +837,95 @@ export default function Page() {
                 </div>
               </div>
 
-              <div className="lg:col-span-6 flex flex-col gap-5">
-                <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h3 className="font-bold text-xs uppercase tracking-wider text-cyan-400 flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-yellow-300" /> Multilingual Citizen Warning Generator
-                    </h3>
-                    <span className="text-[10px] text-slate-500 font-mono">Accessible Warning Text</span>
-                  </div>
+            </div>
 
-                  <div className="flex flex-col gap-2 font-mono text-xs">
-                    <label className="text-slate-300 font-bold flex items-center gap-2">
-                      <Languages className="h-4 w-4 text-cyan-400" /> Citizen Language Selector:
-                    </label>
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                      {[
-                        { code: 'en', label: 'English' },
-                        { code: 'hi', label: 'हिंदी (Hindi)' },
-                        { code: 'as', label: 'অসমীয়া (Assamese)' },
-                        { code: 'bn', label: 'বাংলা (Bengali)' },
-                        { code: 'ne', label: 'नेपाली (Nepali)' },
-                        { code: 'mn', label: 'Manipuri' },
-                      ].map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => setSelectedLanguage(lang.code as AlertLanguage)}
-                          className={`p-2 rounded-xl border text-center transition-all text-xs font-semibold ${
-                            selectedLanguage === lang.code
-                              ? 'bg-cyan-950 border-cyan-500 text-cyan-300 ring-1 ring-cyan-500/50'
-                              : 'bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-400'
-                          }`}
-                        >
-                          {lang.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+            {/* MULTILINGUAL ALERT GENERATOR & VOICE AUDIO PLAYER */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4 font-mono">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-yellow-300" /> Multilingual Citizen Warning Generator & Audio Player
+                </h3>
+                <span className="text-[10px] text-slate-500">Accessible Warning Text</span>
+              </div>
 
-                  {/* Active Multilingual Script Preview Card */}
-                  <div className="bg-slate-950 p-4 rounded-xl border border-cyan-800/80 flex flex-col gap-2 font-sans">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-2 font-mono text-xs">
-                      <span className="font-bold text-cyan-300 flex items-center gap-1.5">
-                        <Languages className="h-3.5 w-3.5 text-cyan-400" />
-                        {selectedLanguage === 'en' && '🇬🇧 ENGLISH ALERT SCRIPT'}
-                        {selectedLanguage === 'hi' && '🇮🇳 HINDI (हिंदी) ALERT SCRIPT'}
-                        {selectedLanguage === 'as' && '🇮🇳 ASSAMESE (অসমীয়া) ALERT SCRIPT'}
-                        {selectedLanguage === 'bn' && '🇮🇳 BENGALI (বাংলা) ALERT SCRIPT'}
-                        {selectedLanguage === 'ne' && '🇳🇵 NEPALI (नेपाली) ALERT SCRIPT'}
-                        {selectedLanguage === 'mn' && '🇮🇳 MANIPURI ALERT SCRIPT'}
-                      </span>
-                      <span className="text-[10px] text-emerald-400 font-bold">
-                        🔊 AUDIO READY
-                      </span>
-                    </div>
-
-                    <div className="text-xs text-slate-100 font-medium whitespace-pre-wrap leading-relaxed bg-slate-900/60 p-3 rounded-lg border border-slate-800">
-                      {currentLanguageMessage}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-1">
+              <div className="flex flex-col gap-2 text-xs">
+                <label className="text-slate-300 font-bold flex items-center gap-2">
+                  <Languages className="h-4 w-4 text-cyan-400" /> Select Regional Language:
+                </label>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                  {[
+                    { code: 'en', label: 'English' },
+                    { code: 'hi', label: 'हिंदी (Hindi)' },
+                    { code: 'as', label: 'অসমীয়া (Assamese)' },
+                    { code: 'bn', label: 'বাংলা (Bengali)' },
+                    { code: 'ne', label: 'नेपाली (Nepali)' },
+                    { code: 'mn', label: 'Manipuri' },
+                  ].map((lang) => (
                     <button
-                      onClick={() => setCustomAlertText('')}
-                      className="flex-1 py-2.5 rounded-xl font-bold text-xs bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 flex items-center justify-center gap-2 transition-all cursor-pointer font-mono"
-                    >
-                      <Sparkles className="h-4 w-4 text-yellow-300" />
-                      <span>✨ REGENERATE SCRIPT</span>
-                    </button>
-
-                    <button
-                      onClick={() => playVoiceAlert(currentLanguageMessage, selectedLanguage)}
-                      className={`px-5 py-2.5 rounded-xl font-bold text-xs border flex items-center justify-center gap-2 transition-all cursor-pointer font-mono ${
-                        isSpeechPlaying
-                          ? 'bg-amber-950 border-amber-500 text-amber-300 animate-pulse'
-                          : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border-emerald-400/40 shadow-lg shadow-emerald-950'
+                      key={lang.code}
+                      onClick={() => setSelectedLanguage(lang.code as AlertLanguage)}
+                      className={`p-2 rounded-xl border text-center transition-all text-xs font-semibold ${
+                        selectedLanguage === lang.code
+                          ? 'bg-cyan-950 border-cyan-500 text-cyan-300 ring-1 ring-cyan-500/50'
+                          : 'bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-400'
                       }`}
                     >
-                      {isSpeechPlaying ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4 text-white" />}
-                      <span>{isSpeechPlaying ? 'PLAYING AUDIO...' : '🔊 PLAY VOICE ALERT'}</span>
+                      {lang.label}
                     </button>
-                  </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Active Script Preview */}
+              <div className="bg-slate-950 p-4 rounded-xl border border-cyan-800/80 flex flex-col gap-2 font-sans">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2 font-mono text-xs">
+                  <span className="font-bold text-cyan-300 flex items-center gap-1.5">
+                    <Languages className="h-3.5 w-3.5 text-cyan-400" />
+                    {selectedLanguage === 'en' && '🇬🇧 ENGLISH ALERT SCRIPT'}
+                    {selectedLanguage === 'hi' && '🇮🇳 HINDI (हिंदी) ALERT SCRIPT'}
+                    {selectedLanguage === 'as' && '🇮🇳 ASSAMESE (অসমীয়া) ALERT SCRIPT'}
+                    {selectedLanguage === 'bn' && '🇮🇳 BENGALI (বাংলা) ALERT SCRIPT'}
+                    {selectedLanguage === 'ne' && '🇳🇵 NEPALI (नेपाली) ALERT SCRIPT'}
+                    {selectedLanguage === 'mn' && '🇮🇳 MANIPURI ALERT SCRIPT'}
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-bold">🔊 AUDIO READY</span>
                 </div>
 
-                <div className="bg-slate-900/90 border border-rose-900/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4 font-mono">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h3 className="font-bold text-xs uppercase tracking-wider text-rose-400 flex items-center gap-2">
-                      <Siren className="h-4 w-4 animate-pulse" /> 🚨 EMERGENCY SIMULATION GATEWAY
-                    </h3>
-                    <span className="text-[10px] text-slate-500">Mass Geofence Delivery</span>
-                  </div>
-
-                  <button
-                    onClick={() => dispatchEmergencyAlert()}
-                    disabled={isGatewaySimulating}
-                    className="py-3 px-5 rounded-xl font-extrabold text-xs uppercase tracking-wider bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-lg shadow-rose-950 border border-rose-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    <Siren className={`h-4 w-4 ${isGatewaySimulating ? 'animate-spin' : ''}`} />
-                    <span>{isGatewaySimulating ? 'SIMULATING EMERGENCY GATEWAY...' : '🚨 SIMULATE EMERGENCY ALERT BROADCAST'}</span>
-                  </button>
+                <div className="text-xs text-slate-100 font-medium whitespace-pre-wrap leading-relaxed bg-slate-900/60 p-3 rounded-lg border border-slate-800">
+                  {currentLanguageMessage}
                 </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  onClick={() => setCustomAlertText('')}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-xs bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 flex items-center justify-center gap-2 transition-all cursor-pointer font-mono"
+                >
+                  <Sparkles className="h-4 w-4 text-yellow-300" />
+                  <span>✨ REGENERATE SCRIPT</span>
+                </button>
+
+                <button
+                  onClick={() => playVoiceAlert(currentLanguageMessage, selectedLanguage)}
+                  className={`px-5 py-2.5 rounded-xl font-bold text-xs border flex items-center justify-center gap-2 transition-all cursor-pointer font-mono ${
+                    isSpeechPlaying
+                      ? 'bg-amber-950 border-amber-500 text-amber-300 animate-pulse'
+                      : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border-emerald-400/40 shadow-lg shadow-emerald-950'
+                  }`}
+                >
+                  {isSpeechPlaying ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4 text-white" />}
+                  <span>{isSpeechPlaying ? 'PLAYING AUDIO...' : '🔊 PLAY VOICE ALERT'}</span>
+                </button>
               </div>
             </div>
 
           </div>
         )}
 
-        {/* ========================================================================= */}
         {/* VIEWPORT 3: EMERGENCY RESPONSE ACCOUNTABILITY */}
-        {/* ========================================================================= */}
         {activeTab === 'response-ops' && (
-          <div className="flex flex-col gap-6">
-
-            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-mono">
+          <div className="flex flex-col gap-6 font-mono">
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm font-bold tracking-wide uppercase text-white flex items-center gap-2">
@@ -1225,12 +964,12 @@ export default function Page() {
                     <h3 className="font-bold text-xs uppercase tracking-wider text-rose-400 flex items-center gap-2">
                       <ShieldAlert className="h-4 w-4" /> Active Disaster Incidents ({incidents.length})
                     </h3>
-                    <span className="text-[10px] text-slate-500 font-mono">Live Dispatch Feed</span>
+                    <span className="text-[10px] text-slate-500">Live Dispatch Feed</span>
                   </div>
 
                   <div className="flex flex-col gap-3">
                     {incidents.map(inc => (
-                      <div key={inc.id} className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 font-mono">
+                      <div key={inc.id} className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
                         <div className="flex items-start justify-between">
                           <div>
                             <span className="text-xs text-cyan-400 font-bold">{inc.id}</span>
@@ -1352,7 +1091,6 @@ export default function Page() {
                 </div>
               </div>
             </div>
-
           </div>
         )}
 
@@ -1525,13 +1263,73 @@ export default function Page() {
 
       </main>
 
-      {/* CONFIRMATION MODAL FOR REAL TEST SMS */}
-      {showSmsConfirmModal && (
+      {/* CONFIRMATION MODAL FOR REAL PUSH NOTIFICATION (Req #9) */}
+      {showPushConfirmModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-emerald-500/60 rounded-2xl max-w-lg w-full p-6 shadow-2xl flex flex-col gap-4 font-mono">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-sm font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-                <Smartphone className="h-5 w-5 text-emerald-400 animate-pulse" />
+                <Bell className="h-5 w-5 text-emerald-400 animate-bounce" />
+                Send Real Push Notification?
+              </h3>
+              <button
+                onClick={() => setShowPushConfirmModal(false)}
+                className="text-slate-400 hover:text-white text-xs font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3 text-xs">
+              <div>
+                <span className="text-slate-400 block text-[11px] mb-0.5">Target Device:</span>
+                <span className="font-bold text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="h-4 w-4" /> {deviceName || 'Registered Demo Phone'}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-slate-400 block text-[11px] mb-0.5 font-bold">Push Notification Preview:</span>
+                <div className="bg-slate-950 p-3.5 rounded-xl border border-emerald-800/80 text-slate-200 font-sans text-xs flex flex-col gap-1.5 shadow-lg">
+                  <strong className="text-emerald-300 font-mono flex items-center gap-1.5">
+                    <Bell className="h-4 w-4 text-emerald-400" /> {pushTitle}
+                  </strong>
+                  <p className="text-slate-300 leading-relaxed font-normal">{pushBody}</p>
+                </div>
+              </div>
+
+              <div className="bg-amber-950/40 border border-amber-800/60 p-3 rounded-xl text-[11px] text-amber-300">
+                ⚠️ <strong>Demonstration Warning:</strong> This will send a real push notification directly to your registered device via Firebase Cloud Messaging.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-800">
+              <button
+                onClick={() => setShowPushConfirmModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleConfirmSendPush}
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Bell className="h-3.5 w-3.5" />
+                <span>Send Notification</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRMATION MODAL FOR REAL TEST SMS */}
+      {showSmsConfirmModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-amber-500/60 rounded-2xl max-w-lg w-full p-6 shadow-2xl flex flex-col gap-4 font-mono">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                <Smartphone className="h-5 w-5 text-amber-400 animate-pulse" />
                 Send Real Test SMS?
               </h3>
               <button
@@ -1556,7 +1354,7 @@ export default function Page() {
               </div>
 
               <div className="bg-amber-950/40 border border-amber-800/60 p-3 rounded-xl text-[11px] text-amber-300">
-                ⚠️ <strong>Disclaimer:</strong> This will send one real test SMS to the authorized phone number specified above and may incur provider charges.
+                ⚠️ <strong>Disclaimer:</strong> This will send one real test SMS through the configured Twilio backend.
               </div>
             </div>
 
@@ -1570,10 +1368,10 @@ export default function Page() {
 
               <button
                 onClick={handleConfirmSendSms}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <Send className="h-3.5 w-3.5" />
-                <span>Send Test SMS</span>
+                <span>Send SMS</span>
               </button>
             </div>
           </div>
