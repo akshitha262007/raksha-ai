@@ -128,7 +128,7 @@ export default function Page() {
   const [testPhoneNumber, setTestPhoneNumber] = useState<string>('+919876543210');
   const [phoneValidationError, setPhoneValidationError] = useState<string | null>(null);
   
-  const defaultTestMessage = `🚨 RAKSHA AI — LANDSLIDE WARNING\n\nEXTREME landslide risk detected in Zone 4 — Tawang Sector 4.\n\nHeavy rainfall (142 mm / 24h) and high soil saturation (87%) have increased slope instability.\n\nPlease move to a safer location and follow instructions from local authorities.\n\n⚠️ DEMONSTRATION ALERT — NOT A REAL EMERGENCY.`;
+  const defaultTestMessage = `RAKSHA AI ALERT: EXTREME landslide risk detected in Zone 4 (Tawang). Heavy rainfall & soil saturation high. Move to safe location. DEMO ALERT - NOT AN EMERGENCY.`;
   const [testMessageText, setTestMessageText] = useState<string>(defaultTestMessage);
 
   // Confirmation Modals State

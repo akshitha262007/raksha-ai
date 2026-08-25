@@ -56,9 +56,10 @@ export async function registerDeviceForPushNotifications(): Promise<{
     const app = getApps().length === 0 ? initializeApp(config) : getApp();
     const messaging = getMessaging(app);
 
-    // 4. Register Service Worker with query params
+    // 4. Register Service Worker & Wait until Active
     const swUrl = `/firebase-messaging-sw.js?apiKey=${encodeURIComponent(config.apiKey)}&projectId=${encodeURIComponent(config.projectId)}&messagingSenderId=${encodeURIComponent(config.messagingSenderId)}&appId=${encodeURIComponent(config.appId)}`;
-    const swRegistration = await navigator.serviceWorker.register(swUrl);
+    await navigator.serviceWorker.register(swUrl);
+    const swRegistration = await navigator.serviceWorker.ready;
 
     // 5. Retrieve FCM Device Token
     const token = await getToken(messaging, {
