@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cute Printable A4 QR Code Sheet</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for Cute Doodles -->
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Patrick+Hand&family=Kalam:wght@700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        .font-caveat { font-family: 'Caveat', cursive; }
+        .font-patrick { font-family: 'Patrick Hand', cursive; }
+        .font-kalam { font-family: 'Kalam', cursive; }
+        .font-quicksand { font-family: 'Quicksand', sans-serif; }
+
+        @media print {
+            @page { size: A4 portrait; margin: 0; }
+            body { background: white !important; margin: 0 !important; }
+            .no-print { display: none !important; }
+            .print-sheet {
+                position: absolute !important;
+                left: 0 !important; top: 0 !important;
+                width: 210mm !important; height: 297mm !important;
+                margin: 0 !important; box-shadow: none !important; border: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex flex-col items-center">
+    
+    <!-- Navbar -->
+    <header class="no-print w-full border-b border-slate-800 bg-slate-950 p-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">🌸</span>
+            <div>
+                <h1 class="text-base font-bold text-white">Cute A4 Printable QR Sheet</h1>
+                <p class="text-xs text-slate-400">Printable sheet with cute doodles and polaroid frame</p>
+            </div>
+        </div>
+
+        <button onclick="window.print()" class="px-5 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 font-bold text-xs text-white shadow-lg flex items-center gap-2">
+            <i class="fa-solid fa-print"></i> Print A4 Sheet 🖨️
+        </button>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-5xl p-6 flex flex-col lg:flex-row gap-8 items-center justify-center">
+        
+        <!-- Controls -->
+        <div class="no-print w-full lg:w-96 bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col gap-4">
+            <h3 class="text-xs font-bold uppercase text-pink-400"><i class="fa-solid fa-palette"></i> Doodle Theme</h3>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <button onclick="setTheme('pink')" class="p-2.5 bg-pink-950 border border-pink-700 rounded-xl text-left font-bold text-pink-200">🌸 Strawberry</button>
+                <button onclick="setTheme('lavender')" class="p-2.5 bg-purple-950 border border-purple-700 rounded-xl text-left font-bold text-purple-200">🪻 Lavender</button>
+                <button onclick="setTheme('mint')" class="p-2.5 bg-emerald-950 border border-emerald-700 rounded-xl text-left font-bold text-emerald-200">🌿 Matcha</button>
+                <button onclick="setTheme('sun')" class="p-2.5 bg-amber-950 border border-amber-700 rounded-xl text-left font-bold text-amber-200">☀️ Sunshine</button>
+            </div>
+
+            <div class="flex flex-col gap-2 pt-2 border-t border-slate-800">
+                <label class="text-xs font-bold text-slate-300">Title</label>
+                <input type="text" id="inputTitle" value="Scan Me! ✨" oninput="updateText()" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-slate-100">
+                
+                <label class="text-xs font-bold text-slate-300">Subtitle</label>
+                <input type="text" id="inputSubtitle" value="Point your camera to scan for a surprise!" oninput="updateText()" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-slate-100">
+            </div>
+
+            <button onclick="window.print()" class="w-full py-3 bg-gradient-to-r from-pink-500 to-rose-500 font-bold text-xs text-white rounded-xl shadow-lg mt-2">
+                🖨️ Print A4 Page Now
+            </button>
+        </div>
+
+        <!-- A4 Sheet Preview -->
+        <div id="sheet" class="print-sheet relative w-full max-w-[480px] aspect-[1/1.414] bg-[#fff0f5] border-4 border-dashed border-pink-300 rounded-2xl p-8 flex flex-col justify-between items-center text-center shadow-2xl">
+            
+            <!-- Top Cluster -->
+            <div class="w-full flex flex-col items-center">
+                <div class="inline-block px-3 py-1 bg-white/90 border border-dashed border-pink-300 rounded-full text-[10px] font-bold text-pink-700 mb-2">
+                    ✨ CAMERA SCANNER READY ✨
+                </div>
+                <h1 id="sheetTitle" class="text-4xl font-bold text-pink-900 font-caveat mb-1">Scan Me! ✨</h1>
+                <p id="sheetSubtitle" class="text-sm font-medium text-pink-700 font-caveat opacity-90">Point your camera to scan for a surprise!</p>
+            </div>
+
+            <!-- Center QR Card -->
+            <div class="bg-white p-4 rounded-3xl shadow-xl border-2 border-pink-200 max-w-[240px] w-full flex flex-col items-center relative">
+                <div class="w-full aspect-square bg-white p-1 rounded-2xl flex items-center justify-center overflow-hidden border border-slate-100">
+                    <img id="qrImg" src="" alt="QR Code" class="w-full h-full object-contain">
+                </div>
+                <div class="mt-2 text-xs font-bold text-pink-800 font-caveat">🌸 Scan with Phone Camera 🌸</div>
+            </div>
+
+            <!-- Bottom Cluster -->
+            <div class="w-full flex flex-col items-center">
+                <div class="flex items-center gap-2 text-lg mb-1">🌸 💖 ✨ 🌼 🎀</div>
+                <p id="sheetFooter" class="text-xs font-medium text-pink-800 font-caveat">Made with love ❤️ • Thank you for scanning!</p>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // Use user base64 QR code image
+        fetch('user_qr_b64.txt').then(r => r.text()).then(b64 => {
+            document.getElementById('qrImg').src = b64;
+        });
+
+        function updateText() {
+            document.getElementById('sheetTitle').innerText = document.getElementById('inputTitle').value;
+            document.getElementById('sheetSubtitle').innerText = document.getElementById('inputSubtitle').value;
+        }
+
+        function setTheme(t) {
+            const sheet = document.getElementById('sheet');
+            if (t === 'pink') sheet.className = "print-sheet relative w-full max-w-[480px] aspect-[1/1.414] bg-[#fff0f5] border-4 border-dashed border-pink-300 rounded-2xl p-8 flex flex-col justify-between items-center text-center shadow-2xl";
+            if (t === 'lavender') sheet.className = "print-sheet relative w-full max-w-[480px] aspect-[1/1.414] bg-[#f3e8ff] border-4 border-dashed border-purple-300 rounded-2xl p-8 flex flex-col justify-between items-center text-center shadow-2xl";
+            if (t === 'mint') sheet.className = "print-sheet relative w-full max-w-[480px] aspect-[1/1.414] bg-[#f0fdf4] border-4 border-dashed border-emerald-300 rounded-2xl p-8 flex flex-col justify-between items-center text-center shadow-2xl";
+            if (t === 'sun') sheet.className = "print-sheet relative w-full max-w-[480px] aspect-[1/1.414] bg-[#fefce8] border-4 border-dashed border-amber-300 rounded-2xl p-8 flex flex-col justify-between items-center text-center shadow-2xl";
+        }
+    </script>
+</body>
+</html>
