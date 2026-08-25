@@ -426,15 +426,20 @@ export function generateMultilingualCitizenAlert(
   locationName: string,
   severity: 'LOW' | 'MODERATE' | 'HIGH' | 'EXTREME'
 ): Record<AlertLanguage, string> {
-  const severityTag = severity === 'EXTREME' ? '🔴 EXTREME LANDSLIDE RISK' : severity === 'HIGH' ? '🟠 LANDSLIDE WARNING' : '🟡 LANDSLIDE ADVISORY';
-  
+  const severityTagEn = severity === 'EXTREME' ? '🔴 EXTREME LANDSLIDE RISK ALERT' : severity === 'HIGH' ? '🟠 LANDSLIDE WARNING' : '🟡 LANDSLIDE ADVISORY';
+  const severityTagHi = severity === 'EXTREME' ? '🔴 भूस्खलन की अति गंभीर चेतावनी' : severity === 'HIGH' ? '🟠 भूस्खलन की चेतावनी' : '🟡 भूस्खलन की सलाह';
+  const severityTagAs = severity === 'EXTREME' ? '🔴 ভূমিস্খলনৰ অত্যন্ত গুৰুতৰ সতৰ্কবাণী' : severity === 'HIGH' ? '🟠 ভূমিস্খলনৰ সতৰ্কবাণী' : '🟡 ভূমিস্খলনৰ দিহা';
+  const severityTagBn = severity === 'EXTREME' ? '🔴 ভূমিধসের অত্যন্ত জরুরি সতর্কতা' : severity === 'HIGH' ? '🟠 ভূমিধসের সতর্কতা' : '🟡 ভূমিধসের নির্দেশিকা';
+  const severityTagNe = severity === 'EXTREME' ? '🔴 अत्यन्त जोखिमपूर्ण पहिरोको चेतावनी' : severity === 'HIGH' ? '🟠 पहिरोको चेतावनी' : '🟡 पहिरोको सतर्कता';
+  const severityTagMn = severity === 'EXTREME' ? '🔴 লৈমাই তাংবগী অতি চেকশিনৱা পাওতাক' : severity === 'HIGH' ? '🟠 লৈমাই তাংবগী চেকশিনৱা' : '🟡 লৈমাই তাংবগী পাওতাক';
+
   return {
-    en: `${severityTag}\n\nAffected Zone: ${locationName}\nHeavy rainfall may cause severe landslides in your area.\n\n🏃 MOVE TO A SAFE PLACE NOW.\n🚫 Avoid hills, steep slopes and river channels.\n📢 Follow instructions from local authorities.`,
-    hi: `🔴 भूस्खलन की गंभीर चेतावनी\n\nप्रभावित क्षेत्र: ${locationName}\nभारी बारिश से आपके क्षेत्र में भूस्खलन का खतरा है।\n\n🏃 तुरंत सुरक्षित स्थान पर जाएं।\n🚫 पहाड़ियों, ढलानों और नदी-नालों से दूर रहें।\n📢 स्थानीय प्रशासन के निर्देशों का पालन करें।`,
-    as: `🔴 ভূমিস্খলনৰ প্ৰবল সতৰ্কবাণী\n\nপ্ৰভাৱিত অঞ্চল: ${locationName}\nপ্ৰবল বৰষুণৰ বাবে আপোনাৰ অঞ্চলত ভূমিস্খলনৰ সৃষ্টি হ'ব পাৰে।\n\n🏃 এতিয়াই সুৰক্ষিত স্থানলৈ স্থানান্তৰিত হওক।\n🚫 পাহাৰ, থিয় ঢাল আৰু নদীৰ খাঁজ এৰাই চলক।\n📢 স্থানীয় কৰ্তৃপক্ষৰ নিৰ্দেশনা পাল কৰক।`,
-    bn: `🔴 তীব্র ভূমিধসের সতর্কতা\n\nক্ষতিগ্রস্ত এলাকা: ${locationName}\nভারী বৃষ্টির কারণে আপনার এলাকায় ভয়াবহ ভূমিধস হতে পারে।\n\n🏃 এখনই নিরাপদ স্থানে সরে যান।\n🚫 পাহাড়, খাড়া ঢাল এবং নদীর চ্যানেল এড়িয়ে চলুন।\n📢 স্থানীয় কর্তৃপক্ষের নির্দেশাবলী মেনে চলুন।`,
-    ne: `🔴 चरम पहिरोको चेतावनी\n\nप्रभावित क्षेत्र: ${locationName}\nभारी वर्षाले गर्दा तपाईंको क्षेत्रमा पहिरो जान सक्छ।\n\n🏃 तुरुन्त सुरक्षित ठाउँमा जानुहोस्।\n🚫 डाँडा, ठाडो भिरालो र नदी किनारबाट टाढा रहनुहोस्।\n📢 स्थानीय अधिकारीहरूको निर्देशन पालना गर्नुहोस्।`,
-    mn: `🔴 লৈমাই তাংবগী চেকশিনৱা পাওতাক\n\nঅকোনবা মফম: ${locationName}\nঅকাংবা নোংচুদুনা অপোনবা মফমদা লৈমাই তাংবা য়াই।\n\n🏃 চেফোং মফমদা থুনা চৎলু।\n🚫 চিংশাং অমসুং তুরেল পরিদা চৎখিগনু।\n📢 মফম অদুগী লৈঙাকফমগী পাওতাক ইন্নু।`
+    en: `${severityTagEn}\n\nAffected Sector: ${locationName}\nHazard: ${hazard} — Heavy rainfall & slope saturation detected.\n\n🏃 MOVE TO A SAFE LOCATION IMMEDIATELY.\n🚫 Avoid steep hillsides, active fissures, and river channels.\n📢 Follow emergency guidance from local disaster authorities.`,
+    hi: `${severityTagHi}\n\nप्रभावित क्षेत्र: ${locationName}\nखतरा: ${hazard} — अत्यधिक वर्षा और मिट्टी के कटाव से भूस्खलन का खतरा.\n\n🏃 तुरंत सुरक्षित स्थान पर जाएं।\n🚫 ढलानों, दरारों और नदी-नालों के पास न जाएं।\n📢 स्थानीय प्रशासन के निर्देशों का पालन करें।`,
+    as: `${severityTagAs}\n\nপ্ৰভাৱিত অঞ্চল: ${locationName}\nবিপদ: ${hazard} — প্ৰবল বৰষুণৰ বাবে পাহাৰ খহি পৰাৰ প্ৰবল আশংকা।\n\n🏃 এতিয়াই সুৰক্ষিত স্থানলৈ স্থানান্তৰিত হওক।\n🚫 থিয় পাহাৰি ঢাল, ফাট মেলা ঠাই আৰু নদীৰ খাঁজৰ পৰা আঁতৰত থাকক।\n📢 স্থানীয় দুৰ্যোগ প্ৰশমন কৰ্তৃপক্ষৰ নিৰ্দেশনা পালন কৰক।`,
+    bn: `${severityTagBn}\n\nক্ষতিগ্রস্ত এলাকা: ${locationName}\nবিপদ: ${hazard} — ভারী বৃষ্টির ফলে খাড়া পাহাড়ে ধস নামার সম্ভাবনা।\n\n🏃 এখনই নিরাপদ আশ্রয়স্থলে চলে যান।\n🚫 পাহাড়ের খাড়া ঢাল, ফাটল ধরা স্থান ও নদীকূল থেকে দূরে থাকুন।\n📢 স্থানীয় দুর্যোগ ব্যবস্থাপনা কর্তৃপক্ষের নির্দেশ মেনে চলুন।`,
+    ne: `${severityTagNe}\n\nप्रभावित क्षेत्र: ${locationName}\nजोखिम: ${hazard} — भारी वर्षाका कारण भीर-पखेरामा पहिरो जाने उच्च सम्भावना।\n\n🏃 तुरुन्तै सुरक्षित स्थानमा जानुहोस्।\n🚫 भीर, खस्ने डाँडा र खोला-नालाको नजिक नजानुहोस्।\n📢 स्थानीय विपद् व्यवस्थापन अधिकारीहरूको निर्देशन पालना गर्नुहोस्।`,
+    mn: `${severityTagMn}\n\nঅকোনবা মফম: ${locationName}\nঅকিবগা মাযোম: ${hazard} — অকাংবা নোংচুদুনা চিংশাংদা লৈমাই তাংবা য়াই।\n\n🏃 চেফোং শাফবা মফমদা থুনা চৎলু।\n🚫 চিংশাংগী অকাংবা মরক অমসুং তুরেল পরিদা চৎখিগনু।\n📢 মফম অদুগী লৈঙাকফমগী চেকশিন পাওতাক ইন্নু।`
   };
 }
 

@@ -703,10 +703,11 @@ export function useDisasterData() {
     addLog('INFO', `Sensor telemetry clock loop ${!isAutoStreamActive ? 'RESUMED' : 'PAUSED'}.`);
   }, [isAutoStreamActive, addLog]);
 
-  // Voice TTS Player
+  // Enhanced Multilingual Voice TTS Player
   const playVoiceAlert = useCallback((text: string, lang: AlertLanguage) => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
+
       const utterance = new SpeechSynthesisUtterance(text);
       
       const langCodes: Record<AlertLanguage, string> = {
@@ -715,12 +716,39 @@ export function useDisasterData() {
         as: 'as-IN',
         bn: 'bn-IN',
         ne: 'ne-NP',
-        mn: 'hi-IN'
+        mn: 'mn-IN'
       };
-      
-      utterance.lang = langCodes[lang] || 'en-IN';
-      utterance.rate = 0.9;
-      
+
+      const targetLangTag = langCodes[lang] || 'en-IN';
+      utterance.lang = targetLangTag;
+      utterance.rate = 0.85; // Clear pace for emergency broadcasts
+      utterance.pitch = 1.0;
+
+      // Try matching best installed browser voice for the selected language
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        let matchedVoice = voices.find(v => v.lang.toLowerCase() === targetLangTag.toLowerCase());
+        
+        if (!matchedVoice && lang === 'hi') {
+          matchedVoice = voices.find(v => v.lang.toLowerCase().startsWith('hi') || v.name.toLowerCase().includes('hindi'));
+        }
+        if (!matchedVoice && lang === 'bn') {
+          matchedVoice = voices.find(v => v.lang.toLowerCase().startsWith('bn') || v.name.toLowerCase().includes('bengali'));
+        }
+        if (!matchedVoice && (lang === 'as' || lang === 'mn')) {
+          // Fallback Assamese / Manipuri to Bengali or Hindi voice if specific font voice absent
+          matchedVoice = voices.find(v => v.lang.toLowerCase().startsWith('bn') || v.lang.toLowerCase().startsWith('hi'));
+        }
+        if (!matchedVoice && lang === 'ne') {
+          // Fallback Nepali to Hindi voice (shares Devanagari script)
+          matchedVoice = voices.find(v => v.lang.toLowerCase().startsWith('ne') || v.lang.toLowerCase().startsWith('hi'));
+        }
+
+        if (matchedVoice) {
+          utterance.voice = matchedVoice;
+        }
+      }
+
       utterance.onstart = () => setIsSpeechPlaying(true);
       utterance.onend = () => setIsSpeechPlaying(false);
       utterance.onerror = () => setIsSpeechPlaying(false);

@@ -1112,25 +1112,47 @@ export default function Page() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 pt-2">
+                  {/* Active Multilingual Script Preview Card */}
+                  <div className="bg-slate-950 p-4 rounded-xl border border-cyan-800/80 flex flex-col gap-2 font-sans">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2 font-mono text-xs">
+                      <span className="font-bold text-cyan-300 flex items-center gap-1.5">
+                        <Languages className="h-3.5 w-3.5 text-cyan-400" />
+                        {selectedLanguage === 'en' && '🇬🇧 ENGLISH ALERT SCRIPT'}
+                        {selectedLanguage === 'hi' && '🇮🇳 HINDI (हिंदी) ALERT SCRIPT'}
+                        {selectedLanguage === 'as' && '🇮🇳 ASSAMESE (অসমীয়া) ALERT SCRIPT'}
+                        {selectedLanguage === 'bn' && '🇮🇳 BENGALI (বাংলা) ALERT SCRIPT'}
+                        {selectedLanguage === 'ne' && '🇳🇵 NEPALI (नेपाली) ALERT SCRIPT'}
+                        {selectedLanguage === 'mn' && '🇮🇳 MANIPURI ALERT SCRIPT'}
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-bold">
+                        🔊 AUDIO READY
+                      </span>
+                    </div>
+
+                    <div className="text-xs text-slate-100 font-medium whitespace-pre-wrap leading-relaxed bg-slate-900/60 p-3 rounded-lg border border-slate-800">
+                      {currentLanguageMessage}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-1">
                     <button
                       onClick={() => setCustomAlertText('')}
-                      className="flex-1 py-2.5 rounded-xl font-bold text-xs bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl font-bold text-xs bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 flex items-center justify-center gap-2 transition-all cursor-pointer font-mono"
                     >
                       <Sparkles className="h-4 w-4 text-yellow-300" />
-                      <span>✨ GENERATE AI ALERT</span>
+                      <span>✨ REGENERATE SCRIPT</span>
                     </button>
 
                     <button
                       onClick={() => playVoiceAlert(currentLanguageMessage, selectedLanguage)}
-                      className={`px-4 py-2.5 rounded-xl font-bold text-xs border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      className={`px-5 py-2.5 rounded-xl font-bold text-xs border flex items-center justify-center gap-2 transition-all cursor-pointer font-mono ${
                         isSpeechPlaying
                           ? 'bg-amber-950 border-amber-500 text-amber-300 animate-pulse'
-                          : 'bg-slate-950 hover:bg-slate-900 border-slate-800 text-slate-200'
+                          : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border-emerald-400/40 shadow-lg shadow-emerald-950'
                       }`}
                     >
-                      {isSpeechPlaying ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4 text-emerald-400" />}
-                      <span>{isSpeechPlaying ? 'PLAYING...' : '🔊 PLAY VOICE ALERT'}</span>
+                      {isSpeechPlaying ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4 text-white" />}
+                      <span>{isSpeechPlaying ? 'PLAYING AUDIO...' : '🔊 PLAY VOICE ALERT'}</span>
                     </button>
                   </div>
                 </div>
