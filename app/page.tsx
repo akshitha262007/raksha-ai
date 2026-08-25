@@ -119,7 +119,7 @@ export default function Page() {
   const [testPhoneNumber, setTestPhoneNumber] = useState<string>('+919876543210');
   const [phoneValidationError, setPhoneValidationError] = useState<string | null>(null);
   
-  const defaultTestMessage = `RAKSHA AI — TEST ALERT\nThis is a demonstration of the Raksha AI Citizen Early Warning System.\nSimulated landslide risk: EXTREME\nLocation: Zone 4\nNO EMERGENCY ACTION IS REQUIRED.`;
+  const defaultTestMessage = `🚨 RAKSHA AI — LANDSLIDE WARNING\n\nEXTREME landslide risk detected in Zone 4 — Tawang Sector 4.\n\nHeavy rainfall (142 mm / 24h) and high soil saturation (87%) have increased slope instability.\n\nPlease move to a safer location and follow instructions from local authorities.\n\n⚠️ DEMONSTRATION ALERT — NOT A REAL EMERGENCY.`;
   const [testMessageText, setTestMessageText] = useState<string>(defaultTestMessage);
 
   // Confirmation Modal State

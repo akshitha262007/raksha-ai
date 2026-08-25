@@ -38,19 +38,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Dispatch via Server-Side SMS Service
+    // 4. Dispatch via Server-Side Twilio SMS Service
     const result = await sendTestSmsViaProvider({
       recipient: recipientPhone,
       message: messageContent
     });
+
+    if (!result.success) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: result.error || 'Failed to dispatch SMS via Twilio API.' 
+        },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       messageId: result.messageId,
       status: result.status || 'Submitted',
       timestamp: result.timestamp,
-      provider: result.provider,
-      isRealDelivery: result.provider === 'twilio' || result.provider === 'generic_http'
+      provider: result.provider
     });
 
   } catch (err: any) {
