@@ -1,14 +1,23 @@
 # dependencies
-/node_modules
-/.pnpm
-/.yarn
+node_modules/
+**/node_modules/
+.pnpm/
+.yarn/
 
-# next.js
-/.next/
-/out/
+# build & distribution
+dist/
+**/dist/
+build/
+out/
+.next/
 
-# production
-/build
+# python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
 
 # debug
 npm-debug.log*

@@ -1,121 +1,110 @@
-# RAKSHA-AI | AI-Based Landslide Early Warning & Risk Monitoring System in NER
-> **Smart India Hackathon (SIH) Problem Statement 26001**  
-> *Developed for Ministry of Development of North Eastern Region (MDoNER) / ISRO Bhuvan GIS Integration*
+# RAKSHA-AI Enterprise Baseline
+
+**Self-Contained Landslide Hazard Risk & Rescue Optimization System**
+
+RAKSHA-AI is a modular, standalone, product-ready enterprise system for evaluating landslide hazard risk and optimizing emergency rescue resource dispatch. Built specifically for high-risk disaster sectors such as Sikkim and the North-Eastern Region (NER) of India, it operates entirely on open telemetry/satellite data models without relying on paid SMS gateways or restricted APIs.
 
 ---
 
-## 🌟 Overview
-**RAKSHA-AI** is a high-fidelity early warning and disaster response optimization platform tailored for landslide-prone zones in the North-Eastern Region (NER) of India (*Arunachal Pradesh, Meghalaya, Sikkim, Assam, Nagaland*).
+## 🏗️ Architecture Overview
 
-The platform continuously evaluates multi-spectral telemetry parameters, calculates dynamic landslide risk indexes (0-100%), and optimizes responder fleet allocation (NDRF & SDRF battalions) using spatial proximity binding matrix algorithms.
-
----
-
-## 🚀 Key Features
-
-1. **Algorithmic Landslide Risk Evaluation Engine**
-   - Weighted formula: **Precipitation (50%) + Soil Moisture Saturation (30%) + Slope Gradient (20%)**
-   - Qualitative Alert Classification:
-     - 🟢 **Safe** (< 40%)
-     - 🟠 **Moderate** (40% - 70%)
-     - 🔴 **Critical** (> 70%)
-
-2. **Citizen Early Warning System (`🚨 Citizen Alerts`)**
-   - Multilingual alert generator (English, Hindi, Assamese, Bengali, Nepali, Manipuri).
-   - Browser Text-to-Speech (`🔊 PLAY VOICE ALERT`) for accessibility.
-   - **Real SMS Test Alert Endpoint** (`POST /api/test-sms`) for sending single test SMS to authorized test mobile numbers.
-   - 8-Step Emergency Gateway Dispatch Simulation for mass geofence warning.
-
-3. **Emergency Response Accountability & Deployment Tracking (`🚑 Response Operations`)**
-   - Multi-agency battalion assignment (NDRF, SDRF, Police, Evacuation).
-   - 5-State lifecycle tracking & 4-Level Automatic Escalation Workflow.
-   - Live GPS vector movement simulation on ISRO Bhuvan map.
-
-4. **Geospatial Proximity Matrix (`Math.hypot`)**
-   - Coordinates emergency responder nodes (NDRF/SDRF) to critical landslide zones based on minimal spatial Euclidean distance.
-
-5. **Live Telemetry Simulator & Log Ticker**
-   - 4-second streaming sync clock simulating localized rainfall anomalies and soil absorption gains.
-   - Real-time terminal log ticker with filter controls.
+```
+fearless-hopper/
+├── README.md                  # System Orchestration & Setup Documentation
+├── backend/                   # Python FastAPI Backend Service
+│   ├── main.py                # App entrypoint, CORS setup, router mounting
+│   ├── requirements.txt       # Dependencies (fastapi, uvicorn, scipy, etc.)
+│   ├── api/                   # Router endpoints (/predict-hazard, /optimize-dispatch)
+│   ├── models/                # Pydantic schemas (Hazard, Dispatch)
+│   └── services/              # Heuristic Risk Pipeline & SciPy LP Transportation Solver
+└── frontend/                  # React + Vite Frontend SPA
+    ├── package.json           # Dependencies (react, leaflet, react-leaflet, lucide-react)
+    ├── vite.config.js         # Vite bundler & API proxy configuration
+    ├── index.html             # HTML Shell with Leaflet CSS
+    └── src/                   # React Components (MapView, Predictor, Dispatcher, Push Alerts)
+```
 
 ---
 
-## 📱 Real SMS Test Setup
+## ⚡ Quickstart Guide
 
-To enable real SMS delivery to your phone during hackathon evaluation:
+### 1. Running Backend (`/backend`)
 
-1. **Copy Environment Template**:
-   ```bash
-   cp .env.example .env.local
-   ```
+**Prerequisites**: Python 3.9+
 
-2. **Configure Provider Credentials in `.env.local`**:
-   ```env
-   SMS_TEST_MODE=true
-   SMS_PROVIDER=twilio
-   SMS_ACCOUNT_ID=your_twilio_account_sid
-   SMS_API_SECRET=your_twilio_auth_token
-   SMS_SENDER_ID=your_twilio_phone_number
-   ```
+```bash
+# Navigate to backend directory
+cd backend
 
-3. **Start Development Server**:
-   ```bash
-   npm run dev
-   ```
+# Create virtual environment (optional but recommended)
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
 
-4. **Run Real SMS Test**:
-   - Open **🚨 Citizen Alerts** -> **📱 SEND TEST SMS — REAL MESSAGE**.
-   - Enter your phone number in international format (e.g., `+919876543210`).
-   - Click **`📱 SEND TEST SMS`** and confirm in the dialog box.
-   - The backend API (`POST /api/test-sms`) will dispatch the SMS via your configured provider and return submission status & message SID.
+# Install dependencies
+pip install -r requirements.txt
 
-> **Note on DLT / India Compliance**: If using an Indian SMS gateway (e.g. Fast2SMS / ValueFirst / ACL Mobile), register your PE-ID and Sender ID as required by TRAI DLT regulations. For development and testing, standard Twilio verified numbers work directly.
+# Start FastAPI server (runs on http://localhost:8000)
+python main.py
+# Alternatively:
+uvicorn main:app --reload --port 8000
+```
+
+- **Swagger API Docs**: Interactive Swagger documentation is available at [http://localhost:8000/docs](http://localhost:8000/docs).
 
 ---
 
-## 🛠️ Tech Stack
+### 2. Running Frontend (`/frontend`)
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript (Strict enforcement)
-- **Styling**: Tailwind CSS (Dark slate technical theme)
-- **Icons**: Lucide React
-- **Deployment**: Vercel / Netlify / Cloudflare Pages / Custom Node Server
+**Prerequisites**: Node.js 18+ & npm
 
----
+```bash
+# Navigate to frontend directory
+cd frontend
 
-## 💻 Local Development Setup
+# Install dependencies
+npm install
 
-1. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
+# Start Vite development server (runs on http://localhost:3000)
+npm run dev
+```
 
-2. **Run Development Server**:
-   ```bash
-   npm run dev
-   ```
-
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+- **Open SPA**: Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🌐 One-Click Public Deployment (Vercel / Netlify)
+## 📡 API Endpoints
 
-### Option A: Deploy to Vercel (Recommended)
-1. Push this code repository to GitHub / GitLab / Bitbucket.
-2. Go to [Vercel](https://vercel.com) and click **"Add New Project"**.
-3. Import your repository. Vercel will automatically detect Next.js settings.
-4. Add environment variables (`SMS_TEST_MODE`, `SMS_PROVIDER`, `SMS_ACCOUNT_ID`, `SMS_API_SECRET`, `SMS_SENDER_ID`).
-5. Click **"Deploy"**. Your app will be live on a public `.vercel.app` domain in 60 seconds!
+### 1. Landslide Hazard Risk Prediction
+- **Endpoint**: `POST /api/predict-hazard`
+- **Request Body**:
+  ```json
+  {
+    "slope_angle": 42.5,
+    "rainfall_24h": 185.0,
+    "soil_moisture": 78.0,
+    "ndvi": 0.15,
+    "location_name": "Gangtok-Pakyong Belt, Sikkim"
+  }
+  ```
+- **Response**: Risk score ($0.0 - 1.0$), risk rating (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`), model confidence level, key factors, and SOP recommendations.
+
+### 2. NDRF / SDRF Resource Dispatch Optimization
+- **Endpoint**: `POST /api/optimize-dispatch`
+- **Request Body**: Accepts list of rescue supply depots and affected disaster sites with capacities and demands.
+- **Algorithm**: Solves linear programming transportation model via `scipy.optimize.linprog(method='highs')`.
+- **Response**: Status (`OPTIMAL`), minimum transport cost metric, and detailed allocation matrix routing units from depots to sites.
 
 ---
 
-## 🗺️ Monitored NER Geographical Sectors
+## 🔔 Browser Web Push Alerts (VAPID)
 
-| Sector | State | Coordinates | Geology |
-| :--- | :--- | :--- | :--- |
-| **Tawang Sector 4** | Arunachal Pradesh | 27.586° N, 91.859° E | Weathered Gneiss & Loose Granite |
-| **Cherrapunji Plateau** | Meghalaya | 25.298° N, 91.733° E | Saturated Limestone & Karst |
-| **Gangtok East Ridge** | Sikkim | 27.338° N, 88.606° E | Disintegrated Mica Schists |
-| **Haflong Hill Cut** | Assam | 25.170° N, 93.016° E | Unconsolidated Clay & Sand |
-| **Kohima Bypass Pass** | Nagaland | 25.675° N, 94.108° E | Fractured Disintegrated Shale |
+RAKSHA-AI implements browser-native Web Push notifications utilizing the VAPID key handshake pattern. This ensures zero dependence on third-party paid SMS gateways while delivering immediate geofenced emergency alerts to user browsers.
+
+---
+
+## 🛡️ License
+
+Enterprise Product Baseline — RAKSHA-AI System Architecture.
