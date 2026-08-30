@@ -1,12 +1,15 @@
 /**
  * RAKSHA-AI OASIS Common Alerting Protocol (CAP v1.2) Exporter Service
- * Generates SACHET national cell-broadcasting XML & JSON payloads.
+ * Generates SACHET national cell-broadcasting XML & JSON payloads safely.
  */
 
-export function generateCAP12Payload(params = {}, hazardResult = {}) {
-  const riskScore = hazardResult.risk_score || 0.75;
-  const category = hazardResult.risk_category || 'HIGH';
-  const location = params.location_name || 'Gangtok-Pakyong Belt, Sikkim Sector';
+export function generateCAP12Payload(params, hazardResult) {
+  const safeParams = params || {};
+  const safeResult = hazardResult || {};
+
+  const riskScore = safeResult?.risk_score ?? 0.75;
+  const category = safeResult?.risk_category ?? 'HIGH';
+  const location = safeParams?.location_name || 'Gangtok-Pakyong Belt, Sikkim Sector';
   const nowISO = new Date().toISOString();
 
   const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
@@ -29,7 +32,7 @@ export function generateCAP12Payload(params = {}, hazardResult = {}) {
       <value>LSW</value>
     </eventCode>
     <headline>🚨 RAKSHA-AI LANDSLIDE HAZARD ALERT: ${location}</headline>
-    <description>24h Precipitation: ${params.rainfall_24h || 185}mm | Slope: ${params.slope_angle || 42.5}° | Risk Index: ${Math.round(riskScore * 100)}%. Mandatory evacuation and SOP protocols active.</description>
+    <description>24h Precipitation: ${safeParams?.rainfall_24h || 185}mm | Slope: ${safeParams?.slope_angle || 42.5}° | Risk Index: ${Math.round(riskScore * 100)}%. Mandatory evacuation and SOP protocols active.</description>
     <instruction>Evacuate downslope zones immediately. Avoid NH-10 Pakyong Cut route.</instruction>
     <area>
       <areaDesc>${location}</areaDesc>

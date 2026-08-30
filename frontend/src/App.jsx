@@ -45,7 +45,20 @@ export default function App() {
     location_name: 'Gangtok-Pakyong Belt, Sikkim'
   });
 
-  const [hazardResult, setHazardResult] = useState(null);
+  const [hazardResult, setHazardResult] = useState({
+    risk_score: 0.72,
+    risk_category: 'HIGH',
+    confidence_score: 0.94,
+    key_contributing_factors: ['Steep terrain slope gradient', 'Heavy rainfall saturation'],
+    recommended_actions: ['Elevate emergency monitoring station alert status'],
+    model_version: 'v2.0-aavishkar-risk-engine',
+    factor_of_safety: 0.99,
+    layer1_lri: 56.3,
+    anomaly_flagged: false,
+    alert_color: 'ORANGE',
+    layer2_action: 'TARGETED PRE-ALERT'
+  });
+
   const [allocations, setAllocations] = useState([]);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
@@ -88,24 +101,24 @@ export default function App() {
   };
 
   const handlePredictionChange = (result, params) => {
-    setHazardResult(result);
+    if (result) setHazardResult(result);
     if (params) setActiveParams(params);
 
-    if (result && result.risk_score >= 0.80) {
+    if (result?.risk_score >= 0.80) {
       const exists = incidentLogs.some(l => l.title.includes('CRITICAL HAZARD ALERT'));
       if (!exists) {
         setIncidentLogs(prev => [
           {
             id: Date.now(),
             level: 'ACCOUNTABILITY',
-            title: `🚨 CRITICAL HAZARD ALERT (${(result.risk_score * 100).toFixed(0)}%)`,
+            title: `🚨 CRITICAL HAZARD ALERT (${((result?.risk_score || 0) * 100).toFixed(0)}%)`,
             message: `Geofence warning triggered for ${params?.location_name || 'Sikkim Sector'}. SOP evacuation initiated.`,
             time: new Date().toLocaleTimeString()
           },
           ...prev
         ]);
 
-        logAuditEvent(role, 'Emergency Warning Escalated', `Risk index hit ${(result.risk_score * 100).toFixed(1)}% in ${params?.location_name || 'Sikkim Sector'}.`);
+        logAuditEvent(role, 'Emergency Warning Escalated', `Risk index hit ${((result?.risk_score || 0) * 100).toFixed(1)}% in ${params?.location_name || 'Sikkim Sector'}.`);
       }
     }
   };

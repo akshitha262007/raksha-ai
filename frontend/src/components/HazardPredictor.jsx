@@ -15,7 +15,7 @@ export default function HazardPredictor({ onPredictionChange, lang = 'en', t }) 
       onPredictionChange(result, params);
 
       // Play emergency audio beep tone if risk > 80%
-      if (result.risk_score >= 0.80) {
+      if (result?.risk_score >= 0.80) {
         playEmergencyAudioBeep();
       }
     }
@@ -208,15 +208,15 @@ export default function HazardPredictor({ onPredictionChange, lang = 'en', t }) 
               <div className="text-xs text-slate-400 font-mono">CALCULATED HAZARD RISK INDEX</div>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-3xl font-extrabold font-mono text-white">
-                  {(result.risk_score * 100).toFixed(1)}%
+                  {((result?.risk_score || 0) * 100).toFixed(1)}%
                 </span>
-                <span className="text-xs text-slate-400 font-mono">({result.risk_score} / 1.0)</span>
+                <span className="text-xs text-slate-400 font-mono">({result?.risk_score || 0} / 1.0)</span>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className={`px-3 py-1 text-xs font-bold font-mono border rounded-md uppercase tracking-wider ${getBadgeColor(result.risk_category)}`}>
-                {result.risk_category}
+              <span className={`px-3 py-1 text-xs font-bold font-mono border rounded-md uppercase tracking-wider ${getBadgeColor(result?.risk_category)}`}>
+                {result?.risk_category || 'UNKNOWN'}
               </span>
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function HazardPredictor({ onPredictionChange, lang = 'en', t }) 
                 <span>Primary Risk Triggers</span>
               </h4>
               <ul className="space-y-1.5 text-slate-400">
-                {result.key_contributing_factors.map((f, i) => (
+                {(result?.key_contributing_factors || []).map((f, i) => (
                   <li key={i} className="bg-slate-900/60 p-2 rounded border border-slate-800/40">
                     • {f}
                   </li>
@@ -242,7 +242,7 @@ export default function HazardPredictor({ onPredictionChange, lang = 'en', t }) 
                 <span>SOP Recommendations</span>
               </h4>
               <ul className="space-y-1.5 text-slate-400">
-                {result.recommended_actions.map((a, i) => (
+                {(result?.recommended_actions || []).map((a, i) => (
                   <li key={i} className="bg-slate-900/60 p-2 rounded border border-slate-800/40">
                     ✓ {a}
                   </li>
