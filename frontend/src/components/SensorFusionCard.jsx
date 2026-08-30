@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Activity, Zap, Droplets, Mountain, Trees, Compass, ShieldCheck, Radio } from 'lucide-react';
+import { Cpu, Activity, Zap, Droplets, Mountain, Trees, Compass, ShieldCheck, Radio, Layers, AlertOctagon } from 'lucide-react';
 
 export default function SensorFusionCard({ params, result, lang = 'en', t }) {
   const slope = params?.slope_angle ?? 42.5;
@@ -14,6 +14,11 @@ export default function SensorFusionCard({ params, result, lang = 'en', t }) {
   const riskProb = result ? Math.round(result.risk_score * 100) : 72;
   const confidence = result ? Math.round(result.confidence_score * 100) : 94;
   const category = result?.risk_category || 'HIGH';
+
+  const fs = result?.factor_of_safety ?? 0.99;
+  const lri = result?.layer1_lri ?? 56.3;
+  const alertColor = result?.alert_color || 'ORANGE';
+  const layer2Action = result?.layer2_action || 'TARGETED PRE-ALERT';
 
   const channelsData = [
     { key: 'precip', label: t.channels.precip, val: `${rain} mm`, icon: Droplets, color: rain > 150 ? 'text-red-400' : 'text-cyan-400' },
@@ -43,7 +48,7 @@ export default function SensorFusionCard({ params, result, lang = 'en', t }) {
             <h2 className="text-base font-bold text-white flex items-center gap-2">
               <span>{t.sensorFusionTitle}</span>
               <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-cyan-950 text-cyan-400 border border-cyan-800 rounded">
-                7 CHANNELS ACTIVE
+                AAVISHKAR DUAL-LAYER ENGINE
               </span>
             </h2>
             <p className="text-xs text-slate-400">{t.sensorFusionSub}</p>
@@ -55,6 +60,31 @@ export default function SensorFusionCard({ params, result, lang = 'en', t }) {
           <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-mono">
             <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
             <span className="text-emerald-400 font-bold">{t.loraStatus}</span>
+          </div>
+
+          {/* Factor of Safety (Fs) & Aavishkar Metrics */}
+          <div className="flex items-center gap-3 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-mono">
+            <div className="flex items-center gap-1">
+              <Layers className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-slate-400">Fs:</span>
+              <span className={`font-bold ${fs < 1.0 ? 'text-red-400' : fs < 1.2 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                {fs}
+              </span>
+            </div>
+            <span className="text-slate-700">|</span>
+            <div className="flex items-center gap-1">
+              <span className="text-slate-400">LRI:</span>
+              <span className="font-bold text-cyan-400">{lri}</span>
+            </div>
+            <span className="text-slate-700">|</span>
+            <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase border ${
+              alertColor === 'RED' ? 'bg-red-950 text-red-400 border-red-800' :
+              alertColor === 'ORANGE' ? 'bg-amber-950 text-amber-400 border-amber-800' :
+              alertColor === 'YELLOW' ? 'bg-yellow-950 text-yellow-400 border-yellow-800' :
+              'bg-emerald-950 text-emerald-400 border-emerald-800'
+            }`}>
+              {alertColor}: {layer2Action}
+            </span>
           </div>
 
           <div className="flex items-center gap-4">
