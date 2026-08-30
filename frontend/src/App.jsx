@@ -102,30 +102,38 @@ export default function App() {
     ]);
   };
 
-  // Automated High-Risk Telegram Alert Effect
+  // Automated High-Risk Telegram Alert Effect (Synced with UI State)
   useEffect(() => {
-    const currentRiskIndex = Math.round((hazardResult?.risk_score || 0) * 100);
+    const riskIndex = Math.round((hazardResult?.risk_score || 0) * 100);
     const factorOfSafety = hazardResult?.factor_of_safety ?? 1.5;
-    const IS_HIGH_RISK = currentRiskIndex >= 70 || factorOfSafety < 1.0;
 
-    if (IS_HIGH_RISK && !alertSentRef.current) {
-      sendAutomaticTelegramAlert(currentRiskIndex, factorOfSafety, activeParams);
-      alertSentRef.current = true; // Mark as sent to prevent infinite loop
-    } else if (!IS_HIGH_RISK) {
-      alertSentRef.current = false; // Reset trigger when risk drops
+    // Check if risk is truly CRITICAL (e.g. Risk >= 70% AND Fs < 1.0)
+    const isCritical = riskIndex >= 70 && factorOfSafety < 1.0;
+
+    if (isCritical && !alertSentRef.current) {
+      sendTelegramAlert(riskIndex, factorOfSafety, activeParams);
+      alertSentRef.current = true; // Mark as sent to prevent duplicate messages
+    } else if (!isCritical) {
+      alertSentRef.current = false; // Reset when UI drops back to low risk
     }
   }, [hazardResult, activeParams]);
 
-  const sendAutomaticTelegramAlert = async (riskIndex, fs, paramsObj) => {
+  // Dynamic dispatch function
+  const sendTelegramAlert = async (currentRisk, currentFs, sector) => {
     const BOT_TOKEN = "8748896465:AAHHCeT23MkgkvlOYIqF_XYb91-c8IKawuw";
     const CHAT_ID = "7125554895";
 
-    const location = paramsObj?.location_name || 'Gangtok-Pakyong Belt, Sikkim Sector';
-    const message = `🚨 *RAKSHA-AI AUTOMATED HIGH-RISK ALERT* 🚨\n\n` +
-                    `📍 *Sector:* ${location}\n` +
-                    `⚠️ *Landslide Risk Index:* ${riskIndex}% (CRITICAL)\n` +
-                    `📈 *Factor of Safety (Fs):* ${fs}\n\n` +
-                    `📢 *Directive:* AUTOMATIC TRIGGER — Mandatory Evacuation Order Active on NH-10. SDRF teams notified.`;
+    const isHighRisk = currentRisk >= 70 || currentFs < 1.0;
+
+    const message = `🚨 *RAKSHA-AI EMERGENCY BROADCAST* 🚨\n\n` +
+                    `📍 *Sector:* ${sector?.location_name || "Gangtok-Pakyong Belt, Sikkim (Node #7)"}\n` +
+                    `⚠️ *Landslide Risk Index:* ${currentRisk}% (${isHighRisk ? 'CRITICAL' : 'LOW'})\n` +
+                    `📈 *Factor of Safety (Fs):* ${currentFs}\n\n` +
+                    `📢 *Directive:* ${
+                      isHighRisk 
+                        ? 'Mandatory Evacuation Order Active on NH-10. Proceed to designated NDRF/SDRF relief camps immediately.' 
+                        : 'Normal monitoring active. Telemetry within safe operating parameters.'
+                    }`;
 
     try {
       await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -137,10 +145,10 @@ export default function App() {
           parse_mode: "Markdown",
         }),
       });
-      console.log("⚡ Auto-dispatch triggered on High Risk threshold!");
-      logAuditEvent('System Automation', 'Telegram Auto-Dispatch', `Sent high-risk alert for ${location} (Risk: ${riskIndex}%, Fs: ${fs}).`);
+      console.log("Telegram dispatch synced with UI state!");
+      logAuditEvent('System Automation', 'Telegram Dispatch Synced', `Sent alert for ${sector?.location_name || 'Sikkim'} (Risk: ${currentRisk}%, Fs: ${currentFs}).`);
     } catch (err) {
-      console.error("Auto Telegram Dispatch Failed:", err);
+      console.error("Telegram Dispatch Error:", err);
     }
   };
 
