@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import WebPushBanner from './components/WebPushBanner';
 import SensorFusionCard from './components/SensorFusionCard';
@@ -87,6 +87,8 @@ export default function App() {
     }
   ]);
 
+  const alertSentRef = useRef(false);
+
   const logAuditEvent = (roleTag, actionTitle, detailsText) => {
     setAuditLogs(prev => [
       {
@@ -98,6 +100,48 @@ export default function App() {
       },
       ...prev
     ]);
+  };
+
+  // Automated High-Risk Telegram Alert Effect
+  useEffect(() => {
+    const currentRiskIndex = Math.round((hazardResult?.risk_score || 0) * 100);
+    const factorOfSafety = hazardResult?.factor_of_safety ?? 1.5;
+    const IS_HIGH_RISK = currentRiskIndex >= 70 || factorOfSafety < 1.0;
+
+    if (IS_HIGH_RISK && !alertSentRef.current) {
+      sendAutomaticTelegramAlert(currentRiskIndex, factorOfSafety, activeParams);
+      alertSentRef.current = true; // Mark as sent to prevent infinite loop
+    } else if (!IS_HIGH_RISK) {
+      alertSentRef.current = false; // Reset trigger when risk drops
+    }
+  }, [hazardResult, activeParams]);
+
+  const sendAutomaticTelegramAlert = async (riskIndex, fs, paramsObj) => {
+    const BOT_TOKEN = "8748896465:AAHHCeT23MkgkvlOYIqF_XYb91-c8IKawuw";
+    const CHAT_ID = "7125554895";
+
+    const location = paramsObj?.location_name || 'Gangtok-Pakyong Belt, Sikkim Sector';
+    const message = `🚨 *RAKSHA-AI AUTOMATED HIGH-RISK ALERT* 🚨\n\n` +
+                    `📍 *Sector:* ${location}\n` +
+                    `⚠️ *Landslide Risk Index:* ${riskIndex}% (CRITICAL)\n` +
+                    `📈 *Factor of Safety (Fs):* ${fs}\n\n` +
+                    `📢 *Directive:* AUTOMATIC TRIGGER — Mandatory Evacuation Order Active on NH-10. SDRF teams notified.`;
+
+    try {
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: message,
+          parse_mode: "Markdown",
+        }),
+      });
+      console.log("⚡ Auto-dispatch triggered on High Risk threshold!");
+      logAuditEvent('System Automation', 'Telegram Auto-Dispatch', `Sent high-risk alert for ${location} (Risk: ${riskIndex}%, Fs: ${fs}).`);
+    } catch (err) {
+      console.error("Auto Telegram Dispatch Failed:", err);
+    }
   };
 
   const handlePredictionChange = (result, params) => {
