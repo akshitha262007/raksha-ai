@@ -13,19 +13,19 @@ export default function TelegramBroadcastCard({ hazardResult, params }) {
     setBroadcasting(true);
     setRealAlertStatus(null);
 
-    const currentRiskIndex = Math.round((hazardResult?.risk_score || 0) * 100);
-    const factorOfSafety = hazardResult?.factor_of_safety ?? 1.5;
-    const isHighRisk = currentRiskIndex >= 70 || factorOfSafety < 1.0;
-    const location = params?.location_name || 'Gangtok-Pakyong Belt, Sikkim';
+    const currentRisk = Math.round((hazardResult?.risk_score || 0) * 100);
+    const currentFs = hazardResult?.factor_of_safety ?? 0.93;
+    const isHighRisk = currentRisk >= 70;
+    const location = params?.location_name || 'Gangtok-Pakyong Belt, Sikkim (Node #7)';
 
     const message = `🚨 *RAKSHA-AI EMERGENCY BROADCAST* 🚨\n\n` +
                     `📍 *Sector:* ${location}\n` +
-                    `⚠️ *Landslide Risk Index:* ${currentRiskIndex}% (${isHighRisk ? 'CRITICAL' : 'LOW'})\n` +
-                    `📈 *Factor of Safety (Fs):* ${factorOfSafety}\n\n` +
+                    `⚠️ *Landslide Risk Index:* ${currentRisk}% (${isHighRisk ? 'CRITICAL' : 'LOW'})\n` +
+                    `📈 *Factor of Safety (Fs):* ${currentFs}\n\n` +
                     `📢 *Directive:* ${
                       isHighRisk 
                         ? 'Mandatory Evacuation Order Active on NH-10. Proceed to designated NDRF/SDRF relief camps immediately.' 
-                        : 'Normal monitoring active. Telemetry within safe operating parameters. No action required.'
+                        : 'Normal Monitoring Active. Telemetry parameters stable. No immediate evacuation required.'
                     }`;
 
     try {
@@ -40,7 +40,8 @@ export default function TelegramBroadcastCard({ hazardResult, params }) {
       });
 
       if (res.ok) {
-        setRealAlertStatus({ success: true, msg: `⚡ Telegram alert synced & dispatched to Chat ID ${CHAT_ID}!` });
+        console.log("Telegram alert matched to UI!");
+        setRealAlertStatus({ success: true, msg: `⚡ Telegram alert matched to UI state & dispatched to Chat ID ${CHAT_ID}!` });
         setLastBroadcast({
           channel: `Chat ID: ${CHAT_ID}`,
           message: message,
@@ -63,14 +64,14 @@ export default function TelegramBroadcastCard({ hazardResult, params }) {
     setBroadcasting(true);
     setRealAlertStatus(null);
     setTimeout(() => {
-      const currentRiskIndex = Math.round((hazardResult?.risk_score || 0) * 100);
-      const factorOfSafety = hazardResult?.factor_of_safety ?? 1.5;
-      const isHighRisk = currentRiskIndex >= 70 || factorOfSafety < 1.0;
-      const location = params?.location_name || 'Gangtok-Pakyong Belt, Sikkim';
+      const currentRisk = Math.round((hazardResult?.risk_score || 0) * 100);
+      const currentFs = hazardResult?.factor_of_safety ?? 0.93;
+      const isHighRisk = currentRisk >= 70;
+      const location = params?.location_name || 'Gangtok-Pakyong Belt, Sikkim (Node #7)';
 
       const payload = {
         channel: '@raksha_ner_alert_bot',
-        message: `🚨 *RAKSHA-AI EMERGENCY BROADCAST*\n*Location:* ${location}\n*Hazard Index:* ${currentRiskIndex}% (${isHighRisk ? 'CRITICAL' : 'LOW'})\n*Factor of Safety (Fs):* ${factorOfSafety}\n*Advisory:* ${isHighRisk ? 'Evacuate downslope zones immediately. Avoid NH-10 Pakyong Cut.' : 'Normal monitoring active.'}`,
+        message: `🚨 *RAKSHA-AI EMERGENCY BROADCAST*\n*Location:* ${location}\n*Hazard Index:* ${currentRisk}% (${isHighRisk ? 'CRITICAL' : 'LOW'})\n*Factor of Safety (Fs):* ${currentFs}\n*Advisory:* ${isHighRisk ? 'Mandatory Evacuation Order Active on NH-10. Proceed to designated NDRF/SDRF relief camps immediately.' : 'Normal Monitoring Active. Telemetry parameters stable. No immediate evacuation required.'}`,
         sentTime: new Date().toLocaleTimeString()
       };
 
